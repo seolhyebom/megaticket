@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Search, Menu, User, Ticket } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
+import { useAuth } from "@/contexts/auth-context"
 
 export function SiteHeader() {
     const pathname = usePathname()
     const [isScrolled, setIsScrolled] = useState(false)
+    const { user, logout } = useAuth()
 
     useEffect(() => {
         const handleScroll = () => {
@@ -70,14 +72,32 @@ export function SiteHeader() {
                     </div>
 
                     <div className="flex items-center">
-                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
-                            <User className="h-5 w-5" />
-                            <span className="font-medium">로그인</span>
-                        </Button>
-                        <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
-                            <Ticket className="h-5 w-5" />
-                            <span className="font-medium">내 예약</span>
-                        </Button>
+                        {user ? (
+                            <>
+                                <span className="text-sm font-medium mr-2 hidden md:block text-muted-foreground">
+                                    {user.name}님
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => logout()}
+                                    className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent"
+                                >
+                                    <span className="font-medium">로그아웃</span>
+                                </Button>
+                                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
+                                    <Ticket className="h-5 w-5" />
+                                    <span className="font-medium">내 예약</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <Link href="/login">
+                                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
+                                    <User className="h-5 w-5" />
+                                    <span className="font-medium">로그인</span>
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     <Button variant="ghost" size="icon" className="md:hidden">

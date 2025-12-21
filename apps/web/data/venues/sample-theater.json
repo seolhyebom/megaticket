@@ -1,0 +1,1906 @@
+{
+  "venueId": "sample-theater",
+  "venueName": "Mega Arts Center - Grand Theater",
+  "venueType": "theater",
+  "totalSeats": 200,
+  "grades": [
+    {
+      "grade": "VIP",
+      "color": "#FFD700",
+      "price": 150000
+    },
+    {
+      "grade": "R",
+      "color": "#FF6B6B",
+      "price": 120000
+    },
+    {
+      "grade": "S",
+      "color": "#4ECDC4",
+      "price": 90000
+    },
+    {
+      "grade": "A",
+      "color": "#95E1D3",
+      "price": 60000
+    }
+  ],
+  "sections": [
+    {
+      "sectionId": "floor-1",
+      "sectionName": "1층",
+      "rows": [
+        {
+          "rowId": "A",
+          "rowName": "A열",
+          "grade": "VIP",
+          "seats": [
+            {
+              "seatId": "A-1",
+              "seatNumber": 1,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-2",
+              "seatNumber": 2,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-3",
+              "seatNumber": 3,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-4",
+              "seatNumber": 4,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-5",
+              "seatNumber": 5,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-6",
+              "seatNumber": 6,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-7",
+              "seatNumber": 7,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-8",
+              "seatNumber": 8,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-9",
+              "seatNumber": 9,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-10",
+              "seatNumber": 10,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-11",
+              "seatNumber": 11,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-12",
+              "seatNumber": 12,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-13",
+              "seatNumber": 13,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-14",
+              "seatNumber": 14,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-15",
+              "seatNumber": 15,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-16",
+              "seatNumber": 16,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-17",
+              "seatNumber": 17,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-18",
+              "seatNumber": 18,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-19",
+              "seatNumber": 19,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "A-20",
+              "seatNumber": 20,
+              "rowId": "A",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "B",
+          "rowName": "B열",
+          "grade": "VIP",
+          "seats": [
+            {
+              "seatId": "B-1",
+              "seatNumber": 1,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-2",
+              "seatNumber": 2,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-3",
+              "seatNumber": 3,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-4",
+              "seatNumber": 4,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-5",
+              "seatNumber": 5,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-6",
+              "seatNumber": 6,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-7",
+              "seatNumber": 7,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-8",
+              "seatNumber": 8,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-9",
+              "seatNumber": 9,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-10",
+              "seatNumber": 10,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-11",
+              "seatNumber": 11,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-12",
+              "seatNumber": 12,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-13",
+              "seatNumber": 13,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-14",
+              "seatNumber": 14,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-15",
+              "seatNumber": 15,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-16",
+              "seatNumber": 16,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-17",
+              "seatNumber": 17,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-18",
+              "seatNumber": 18,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-19",
+              "seatNumber": 19,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "B-20",
+              "seatNumber": 20,
+              "rowId": "B",
+              "grade": "VIP",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "C",
+          "rowName": "C열",
+          "grade": "R",
+          "seats": [
+            {
+              "seatId": "C-1",
+              "seatNumber": 1,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-2",
+              "seatNumber": 2,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-3",
+              "seatNumber": 3,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-4",
+              "seatNumber": 4,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-5",
+              "seatNumber": 5,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-6",
+              "seatNumber": 6,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-7",
+              "seatNumber": 7,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-8",
+              "seatNumber": 8,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-9",
+              "seatNumber": 9,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-10",
+              "seatNumber": 10,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-11",
+              "seatNumber": 11,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-12",
+              "seatNumber": 12,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-13",
+              "seatNumber": 13,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-14",
+              "seatNumber": 14,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-15",
+              "seatNumber": 15,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-16",
+              "seatNumber": 16,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-17",
+              "seatNumber": 17,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-18",
+              "seatNumber": 18,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-19",
+              "seatNumber": 19,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "C-20",
+              "seatNumber": 20,
+              "rowId": "C",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "D",
+          "rowName": "D열",
+          "grade": "R",
+          "seats": [
+            {
+              "seatId": "D-1",
+              "seatNumber": 1,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-2",
+              "seatNumber": 2,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-3",
+              "seatNumber": 3,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-4",
+              "seatNumber": 4,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-5",
+              "seatNumber": 5,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-6",
+              "seatNumber": 6,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-7",
+              "seatNumber": 7,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-8",
+              "seatNumber": 8,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-9",
+              "seatNumber": 9,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-10",
+              "seatNumber": 10,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-11",
+              "seatNumber": 11,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-12",
+              "seatNumber": 12,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-13",
+              "seatNumber": 13,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-14",
+              "seatNumber": 14,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-15",
+              "seatNumber": 15,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-16",
+              "seatNumber": 16,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-17",
+              "seatNumber": 17,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-18",
+              "seatNumber": 18,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-19",
+              "seatNumber": 19,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "D-20",
+              "seatNumber": 20,
+              "rowId": "D",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "E",
+          "rowName": "E열",
+          "grade": "R",
+          "seats": [
+            {
+              "seatId": "E-1",
+              "seatNumber": 1,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-2",
+              "seatNumber": 2,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-3",
+              "seatNumber": 3,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-4",
+              "seatNumber": 4,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-5",
+              "seatNumber": 5,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-6",
+              "seatNumber": 6,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-7",
+              "seatNumber": 7,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-8",
+              "seatNumber": 8,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-9",
+              "seatNumber": 9,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-10",
+              "seatNumber": 10,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-11",
+              "seatNumber": 11,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-12",
+              "seatNumber": 12,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-13",
+              "seatNumber": 13,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-14",
+              "seatNumber": 14,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-15",
+              "seatNumber": 15,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-16",
+              "seatNumber": 16,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-17",
+              "seatNumber": 17,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-18",
+              "seatNumber": 18,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-19",
+              "seatNumber": 19,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "E-20",
+              "seatNumber": 20,
+              "rowId": "E",
+              "grade": "R",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "F",
+          "rowName": "F열",
+          "grade": "S",
+          "seats": [
+            {
+              "seatId": "F-1",
+              "seatNumber": 1,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-2",
+              "seatNumber": 2,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-3",
+              "seatNumber": 3,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-4",
+              "seatNumber": 4,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-5",
+              "seatNumber": 5,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-6",
+              "seatNumber": 6,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-7",
+              "seatNumber": 7,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-8",
+              "seatNumber": 8,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-9",
+              "seatNumber": 9,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-10",
+              "seatNumber": 10,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-11",
+              "seatNumber": 11,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-12",
+              "seatNumber": 12,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-13",
+              "seatNumber": 13,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-14",
+              "seatNumber": 14,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-15",
+              "seatNumber": 15,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-16",
+              "seatNumber": 16,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-17",
+              "seatNumber": 17,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-18",
+              "seatNumber": 18,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-19",
+              "seatNumber": 19,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "F-20",
+              "seatNumber": 20,
+              "rowId": "F",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "G",
+          "rowName": "G열",
+          "grade": "S",
+          "seats": [
+            {
+              "seatId": "G-1",
+              "seatNumber": 1,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-2",
+              "seatNumber": 2,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-3",
+              "seatNumber": 3,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-4",
+              "seatNumber": 4,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-5",
+              "seatNumber": 5,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-6",
+              "seatNumber": 6,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-7",
+              "seatNumber": 7,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-8",
+              "seatNumber": 8,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-9",
+              "seatNumber": 9,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-10",
+              "seatNumber": 10,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-11",
+              "seatNumber": 11,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-12",
+              "seatNumber": 12,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-13",
+              "seatNumber": 13,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-14",
+              "seatNumber": 14,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-15",
+              "seatNumber": 15,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-16",
+              "seatNumber": 16,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-17",
+              "seatNumber": 17,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-18",
+              "seatNumber": 18,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-19",
+              "seatNumber": 19,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "G-20",
+              "seatNumber": 20,
+              "rowId": "G",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "H",
+          "rowName": "H열",
+          "grade": "S",
+          "seats": [
+            {
+              "seatId": "H-1",
+              "seatNumber": 1,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-2",
+              "seatNumber": 2,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-3",
+              "seatNumber": 3,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-4",
+              "seatNumber": 4,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-5",
+              "seatNumber": 5,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-6",
+              "seatNumber": 6,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-7",
+              "seatNumber": 7,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-8",
+              "seatNumber": 8,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-9",
+              "seatNumber": 9,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-10",
+              "seatNumber": 10,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-11",
+              "seatNumber": 11,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-12",
+              "seatNumber": 12,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-13",
+              "seatNumber": 13,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-14",
+              "seatNumber": 14,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-15",
+              "seatNumber": 15,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-16",
+              "seatNumber": 16,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-17",
+              "seatNumber": 17,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-18",
+              "seatNumber": 18,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-19",
+              "seatNumber": 19,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "H-20",
+              "seatNumber": 20,
+              "rowId": "H",
+              "grade": "S",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "I",
+          "rowName": "I열",
+          "grade": "A",
+          "seats": [
+            {
+              "seatId": "I-1",
+              "seatNumber": 1,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-2",
+              "seatNumber": 2,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-3",
+              "seatNumber": 3,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-4",
+              "seatNumber": 4,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-5",
+              "seatNumber": 5,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-6",
+              "seatNumber": 6,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-7",
+              "seatNumber": 7,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-8",
+              "seatNumber": 8,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-9",
+              "seatNumber": 9,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-10",
+              "seatNumber": 10,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-11",
+              "seatNumber": 11,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-12",
+              "seatNumber": 12,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-13",
+              "seatNumber": 13,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-14",
+              "seatNumber": 14,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-15",
+              "seatNumber": 15,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-16",
+              "seatNumber": 16,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-17",
+              "seatNumber": 17,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-18",
+              "seatNumber": 18,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-19",
+              "seatNumber": 19,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "I-20",
+              "seatNumber": 20,
+              "rowId": "I",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        },
+        {
+          "rowId": "J",
+          "rowName": "J열",
+          "grade": "A",
+          "seats": [
+            {
+              "seatId": "J-1",
+              "seatNumber": 1,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-2",
+              "seatNumber": 2,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-3",
+              "seatNumber": 3,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-4",
+              "seatNumber": 4,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-5",
+              "seatNumber": 5,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-6",
+              "seatNumber": 6,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-7",
+              "seatNumber": 7,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-8",
+              "seatNumber": 8,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-9",
+              "seatNumber": 9,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-10",
+              "seatNumber": 10,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-11",
+              "seatNumber": 11,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-12",
+              "seatNumber": 12,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-13",
+              "seatNumber": 13,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-14",
+              "seatNumber": 14,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-15",
+              "seatNumber": 15,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-16",
+              "seatNumber": 16,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-17",
+              "seatNumber": 17,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-18",
+              "seatNumber": 18,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-19",
+              "seatNumber": 19,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            },
+            {
+              "seatId": "J-20",
+              "seatNumber": 20,
+              "rowId": "J",
+              "grade": "A",
+              "status": "available",
+              "x": 0,
+              "y": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

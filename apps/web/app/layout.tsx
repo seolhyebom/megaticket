@@ -1,5 +1,6 @@
 
 import type { Metadata } from "next";
+import { AuthProvider } from "@/contexts/auth-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
@@ -17,11 +18,13 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="antialiased min-h-screen flex flex-col font-sans bg-background text-foreground">
-        <SiteHeader />
-        <main className="flex-1 flex flex-col">
-          {children}
-        </main>
-        <SiteFooter />
+        <AuthProvider>
+          <SiteHeader />
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
+          <SiteFooter />
+        </AuthProvider>
       </body>
     </html>
   );
