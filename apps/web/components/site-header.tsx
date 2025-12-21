@@ -85,10 +85,12 @@ export function SiteHeader() {
                                 >
                                     <span className="font-medium">로그아웃</span>
                                 </Button>
-                                <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
-                                    <Ticket className="h-5 w-5" />
-                                    <span className="font-medium">내 예약</span>
-                                </Button>
+                                <Link href="/my">
+                                    <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
+                                        <Ticket className="h-5 w-5" />
+                                        <span className="font-medium">내 예약</span>
+                                    </Button>
+                                </Link>
                             </>
                         ) : (
                             <Link href="/login">

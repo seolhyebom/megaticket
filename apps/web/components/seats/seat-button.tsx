@@ -14,7 +14,7 @@ const statusStyles: Record<SeatStatus, string> = {
     available: 'bg-white border-2 hover:brightness-95 cursor-pointer',
     selected: 'border-2 text-white shadow-md animate-in zoom-in-95 duration-200',
     reserved: 'bg-gray-300 border-gray-300 text-gray-500 cursor-not-allowed',
-    holding: 'bg-yellow-200 border-yellow-300 cursor-not-allowed',
+    holding: 'bg-yellow-300 border-yellow-400 text-yellow-900 cursor-not-allowed',
     disabled: 'bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed',
 };
 
@@ -39,7 +39,7 @@ export function SeatButton({ seat, grade, isSelected, onClick }: SeatButtonProps
             onClick={() => onClick(seat.seatId)}
             title={`${seat.rowId}열 ${seat.seatNumber}번 (${grade.grade}석)`}
         >
-            {seat.status === 'reservation' ? 'X' : seat.seatNumber}
+            {seat.status === 'reserved' ? 'X' : seat.seatNumber}
         </button>
     );
 }

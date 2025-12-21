@@ -1,38 +1,64 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { VenueData, Seat, Grade } from "@/types/venue"
+import { useEffect, useState, useCallback } from "react"
+import { VenueData, Seat } from "@/types/venue" // Removed unused Grade import
 import { TheaterTemplate } from "./templates/theater-template"
 import { SeatLegend } from "./seat-legend"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { useRouter } from "next/navigation"
+import { RotateCcw } from "lucide-react"
 
 // Mock import for now - in real app fetch from API
 import sampleTheater from "@/data/venues/sample-theater.json"
 
 interface SeatMapProps {
-    venueId: string; // Not used yet since we import sample directly
+    venueId: string;
     performanceId: string;
     date: string;
     onSelectionComplete: (selectedSeats: Seat[], totalPrice: number) => void;
 }
 
 export function SeatMap({ venueId, performanceId, date, onSelectionComplete }: SeatMapProps) {
-    const router = useRouter()
     const [venueData, setVenueData] = useState<VenueData | null>(null)
     const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([])
     const [loading, setLoading] = useState(true)
 
     const [showMaxAlert, setShowMaxAlert] = useState(false)
 
+    const fetchVenueData = useCallback(async () => {
+        setLoading(true)
+        try {
+            // 1. Get Mock Venue Data
+            const data = JSON.parse(JSON.stringify(sampleTheater)) as VenueData;
+
+            // 2. Get Real-time Seat Status (Add timestamp to prevent caching)
+            const statusRes = await fetch(`/api/seats/${performanceId}?t=${new Date().getTime()}`, { cache: 'no-store' });
+            if (statusRes.ok) {
+                const statusData = await statusRes.json();
+                const statusMap = statusData.seats;
+
+                // 3. Merge Status
+                data.sections.forEach(section => {
+                    section.rows.forEach(row => {
+                        row.seats.forEach(seat => {
+                            if (statusMap[seat.seatId]) {
+                                seat.status = statusMap[seat.seatId];
+                            }
+                        });
+                    });
+                });
+            }
+
+            setVenueData(data);
+        } catch (error) {
+            console.error("Failed to load seat data", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [performanceId])
+
     useEffect(() => {
-        // Simulate API Fetch
-        setTimeout(() => {
-            setVenueData(sampleTheater as unknown as VenueData)
-            setLoading(false)
-        }, 500)
-    }, [])
+        fetchVenueData();
+    }, [fetchVenueData])
 
     useEffect(() => {
         if (showMaxAlert) {
@@ -85,14 +111,14 @@ export function SeatMap({ venueId, performanceId, date, onSelectionComplete }: S
         onSelectionComplete(seats, total);
     }
 
-    if (loading) return <div className="p-10 text-center">좌석 정보를 불러오는 중입니다...</div>
+    if (!venueData && loading) return <div className="p-10 text-center">좌석 정보를 불러오는 중입니다...</div>
     if (!venueData) return <div className="p-10 text-center text-red-500">데이터 로드 실패</div>
 
     return (
         <div className="flex flex-col h-full bg-gray-50 relative">
             {/* Max Seat Alert Overlay */}
             {showMaxAlert && (
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 animate-in fade-in zoom-in duration-300">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] animate-in fade-in zoom-in duration-300">
                     <div className="bg-black/80 text-white px-8 py-4 rounded-full shadow-2xl backdrop-blur-sm flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
                         <span className="font-bold text-lg">최대 4석까지만 예매할 수 있습니다.</span>
@@ -100,9 +126,22 @@ export function SeatMap({ venueId, performanceId, date, onSelectionComplete }: S
                 </div>
             )}
 
+
+
             {/* Stage Area */}
-            <div className="w-full bg-black text-white py-4 text-center font-bold tracking-widest shadow-md z-1">
-                STAGE
+            <div className="w-full bg-black text-white h-14 relative flex items-center justify-center shadow-md z-1">
+                <span className="font-bold tracking-widest text-lg">STAGE</span>
+
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 h-8 text-xs font-medium bg-white/90 hover:bg-white text-gray-800 gap-1.5 transition-all active:scale-95"
+                    onClick={fetchVenueData}
+                    disabled={loading}
+                >
+                    <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    새로고침
+                </Button>
             </div>
 
             {/* Map Area */}
@@ -126,6 +165,7 @@ export function SeatMap({ venueId, performanceId, date, onSelectionComplete }: S
             <div className="flex-1 overflow-auto p-10 flex justify-center items-start custom-scrollbar">
                 {venueData.venueType === 'theater' && (
                     <TheaterTemplate
+                        key={loading ? 'loading' : `loaded-${venueData.totalSeats}-${selectedSeatIds.length}-${new Date().getTime()}`}
                         venueData={venueData}
                         selectedSeats={selectedSeatIds}
                         onSeatClick={handleSeatClick}
