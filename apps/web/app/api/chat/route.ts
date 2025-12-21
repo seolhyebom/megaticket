@@ -1,5 +1,6 @@
 
 import { bedrockClient } from "@/lib/bedrock";
+import { searchPerformances } from "@/lib/rag";
 import { ConverseStreamCommand, Message } from "@aws-sdk/client-bedrock-runtime";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,10 +21,33 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        // RAG: Search for performance data
+        let systemPromptText = SYSTEM_PROMPT;
+        const lastMessage = messages[messages.length - 1];
+
+        if (lastMessage && lastMessage.role === 'user') {
+            // Extract text from content (handling both string and ContentBlock[])
+            let query = "";
+            if (typeof lastMessage.content === 'string') {
+                query = lastMessage.content;
+            } else if (Array.isArray(lastMessage.content)) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                query = lastMessage.content.map((c: any) => c.text || "").join(" ");
+            }
+
+            if (query) {
+                const context = await searchPerformances(query);
+                if (context) {
+                    systemPromptText += `\n\n${context}`;
+                    console.log("RAG Context injected into System Prompt");
+                }
+            }
+        }
+
         const command = new ConverseStreamCommand({
             modelId: modelId || "anthropic.claude-3-5-sonnet-20240620-v1:0",
             messages: messages as Message[],
-            system: [{ text: SYSTEM_PROMPT }],
+            system: [{ text: systemPromptText }],
             inferenceConfig: {
                 maxTokens: 4096,
                 temperature: 0.7,
