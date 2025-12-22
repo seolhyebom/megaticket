@@ -6,8 +6,8 @@ import { SiteFooter } from "@/components/site-footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Antigravity Ticket",
-  description: "Your gateway to the best performances",
+  title: "MegaTicket",
+  description: "MegaTicket - Your gateway to premium performances",
 };
 
 export default function RootLayout({

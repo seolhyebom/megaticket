@@ -69,13 +69,14 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
                          or just rely on alt text if image fails. 
                          Actually, let's use a nice gradient placeholder if URL is just a string */}
                     <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-500/10" />
-                    {/* If we had real images:
-                    <Image 
-                        src={reservation.posterUrl} 
-                        alt={reservation.performanceTitle}
-                        fill
-                        className="object-cover"
-                    /> */}
+                    {reservation.posterUrl && (
+                        <Image
+                            src={reservation.posterUrl}
+                            alt={reservation.performanceTitle}
+                            fill
+                            className="object-cover"
+                        />
+                    )}
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 md:hidden">
                         <h3 className="text-white font-bold text-lg">{reservation.performanceTitle}</h3>
                     </div>

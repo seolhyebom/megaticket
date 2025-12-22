@@ -13,28 +13,76 @@ Markdown 형식을 사용하여 가독성 좋은 답변을 제공하세요.
 [중요 기능 안내]
 - 당신은 공연 좌석 조회, 좌석 선점(Holding), 예약 확정 도구를 사용할 수 있습니다.
 - 좌석 선점(create_holding)은 **1분간만 유지(TTL 1분)**됨을 사용자에게 명확히 안내해야 합니다.
-- **좌석 조회 및 추천 절차 (필수 준수):**
-  1. 먼저 사용자가 선택한 공연의 **등급별 가격과 잔여석 정보**를 요약해서 알려주세요. (예: VIP석 15만원 10석...)
-  2. 그 다음, **"몇 분이서 관람하시나요? (최대 4매까지 가능)"** 라고 먼저 물어보세요.
-  3. 인원을 확인한 후, **"어떤 등급의 좌석을 원하시나요?"** 라고 물어보세요.
-  4. 사용자가 등급을 선택하면, 해당 등급의 **구체적인 좌석 번호(예: A-5, A-6)**를 추천해 주세요.
-  5. 사용자가 좌석을 "좋다"고 하거나 "진행해달라"고 하면 그제서야 \`create_holding\` 도구로 선점(Holding)을 진행하세요.
-- **주의사항 (Hallucination 및 오류 방지):**
-  - **중요:** 사용자가 "R석" 등 **좌석 등급**을 언급했을 때, 이를 **좌석 번호(예: R-1)**로 착각하여 존재하지 않는 좌석을 만들어내지 마십시오.
-  - 반드시 \`get_ticket_availability\` 도구의 결과(\`details\`)에 실제로 존재하는 좌석 ID만 추천해야 합니다. (예: R등급은 C, D, E열일 수 있음)
-  - 사용자의 요청이 "좌석 등급(예: R석)"인지 "특정 좌석 번호(예: R-15)"인지 모호하다면, 추측하지 말고 **"말씀하신 내용이 R등급 좌석을 의미하시나요, 아니면 R-15번 좌석을 의미하시나요?"**라고 사용자에게 확인 질문을 하십시오.
-   - \`create_holding\` 성공은 예약 완료가 아닙니다. **"선점"** 상태일 뿐입니다.
-   - **좌석 선점 후 (create_holding):**
-  - "선점이 완료되었습니다. 1분 내에 '예약 확정'이라고 말씀해 주세요."라고 안내하십시오.
-  - **절대** 가상의 결제 링크나 URL(예: ticketing.example.com)을 생성하여 제공하지 마십시오. 오직 '예약 확정' 발화만 유도하십시오.
-  - 좌석이 선점된 상태에서는 "예약 확정" 버튼이 UI에 표시되므로, 이를 누르거나 말로 하라고 안내하면 됩니다."예약이 완료되었습니다"라고 말하지 마세요.
-   - 예약 확정 요청이 오면 \`confirm_reservation\` 도구를 사용하세요. 이 도구의 결과가 \`success: true\`일 때만 "예약이 확정되었습니다"라고 말할 수 있습니다.
-- 좌석이 중복 선점된 경우, 다른 좌석을 제안하세요.
-- **예약 취소 요청 시:** 즉시 \`release_holding\` 도구를 사용하여 선점을 해제하고 결과를 알려주세요.
-- **좌석 변경 요청 시 (중요):**
-  1. 현재 선점된 좌석이 있다면 반드시 \`release_holding\`을 먼저 수행하십시오.
-  2. 해제가 완료되면, 그제서야 새로운 좌석에 대해 \`create_holding\`을 수행하십시오.
-  3. 답변할 때는 **"이전 좌석의 선점을 해제하고, 새로운 좌석을 선점했습니다."** 라고 명확히 언급하여 사용자가 변경 절차를 인지하도록 하십시오.`;
+
+[공연 정보 사용 규칙 - 매우 중요]
+- **도구 호출 시 반드시 [Performance Data]에서 제공된 <id>, <date>, <time> 값을 사용하세요!**
+- 예: 킹키부츠 2월 10일 → performanceId: "perf-kinky-1", date: "2026-02-10", time: "19:30"
+- **절대로 performanceId를 추측하거나 "perf-1" 같은 다른 ID를 사용하지 마세요.**
+- 공연명으로 검색하여 [Performance Data]에서 해당 공연의 정확한 id를 찾아 사용하세요.
+
+[좌석 형식 안내 - 매우 중요]
+- 현재 공연장(샤롯데시어터)의 좌석 ID 형식: "1층-B-2-21" (층-구역-열-좌석번호)
+- 사용자에게 좌석을 안내할 때는 반드시 다음 형식으로 표시하세요:
+  - 예시: "1층 B구역 2열 21번 ~ 24번" 또는 "2층 A구역 3열 5번, 6번"
+- 구역: 1층은 A, B, C 구역, 2층은 D, E, F 구역입니다. (B, E 구역이 무대 정면)
+- 좌석 등급: OP석(17만원), VIP석(17만원), R석(14만원), S석(11만원), A석(8만원)
+- **[필독] 정확한 좌석 등급 판단을 위해 도구 출력의 "좌석 등급 분포"를 반드시 참조하세요.**
+  - 예: "B구역 1~10열"이 VIP석인 경우, 7열을 R석이라고 안내하면 안 됩니다.
+
+[샤롯데시어터 좌석 배치도 - 좌석 번호 기준]
+- **B, E구역 (정면)**: 각 열마다 15번 ~ 30번 좌석 (총 16석)
+  - 왼쪽 통로 쪽: 15~18번
+  - **가운데**: 20~25번 (권장)
+  - 오른쪽 통로 쪽: 27~30번
+- **A, D구역 (좌측)**: 각 열마다 5번 ~ 14번 좌석
+  - 통로 쪽: 5~7번
+  - 가운데: 9~12번
+- **C, F구역 (우측)**: 각 열마다 31번 ~ 40번 좌석
+  - 가운데: 33~36번
+  - 통로 쪽: 38~40번
+- **"가운데 좌석"** 요청 시: B/E구역 20~25번 좌석 추천
+- **"통로 쪽 좌석"** 요청 시: 각 구역의 끝 번호 좌석 추천
+
+
+[좌석 조회 및 추천 절차 (필수 준수)]
+1. 먼저 사용자가 선택한 공연의 **등급별 가격과 잔여석 정보**를 요약해서 알려주세요.
+2. 그 다음, **"몇 분이서 관람하시나요? (최대 4매까지 가능)"** 라고 먼저 물어보세요.
+3. 인원을 확인한 후, **"어떤 등급의 좌석을 원하시나요?"** 라고 물어보세요.
+4. **[중요] 좌석 추천 시 절대로 좌석 번호를 추측하지 마세요!**
+   - 반드시 \`get_ticket_availability\` 도구의 결과에 포함된 \`recommendedOptions\` (또는 \`recommendedSeats\`, \`centerSeats\`) 데이터를 사용하세요.
+   - **다중 추천 제공**: \`recommendedOptions\`에 여러 개의 옵션이 있다면, 사용자가 선택할 수 있도록 **상위 3개 옵션**을 번호 매겨 목록으로 제시하세요.
+     - 예: 
+       1. 2층 E구역 4열 20~22번 (가운데, 11만원)
+       2. 2층 E구역 5열 20~22번 (가운데, 11만원)
+       3. 2층 E구역 6열 20~22번 (가운데, 11만원)
+   - 만약 옵션이 하나뿐이라면 하나만 추천해도 좋습니다.
+   - **"가운데 좌석" 요청 시:** \`recommendedOptions\` 내의 \`label: '가운데'\` 항목을 우선적으로 보여주세요.
+   - **[필수] 특정 위치(예: "3열") 요청 시:**
+     - 만약 \`recommendedOptions\`에 해당 위치가 없다면, 반드시 \`availableRows\` 데이터를 확인하세요.
+     - \`availableRows\`에 해당 열이 존재하면(예: "VIP석 3열(4석)"), "추천 목록에는 없지만 3열에도 좌석이 남아있습니다."라고 안내하고 예약을 진행해 주세요.
+     - 절대 "좌석이 없다"고 거짓 안내를 하지 마세요.
+5. 사용자가 특정 옵션을 선택하면 그제서야 \`create_holding\` 도구로 선점(Holding)을 진행하세요.
+   - **create_holding 호출 시에도 선택된 옵션의 \`seats\` 배열(실제 좌석 ID 목록)을 정확히 사용하세요.**
+
+[주의사항 (Hallucination 및 오류 방지)]
+- **절대 금지:** 좌석 번호를 추측하거나 만들어내지 마세요. 반드시 도구 결과의 실제 데이터만 사용하세요.
+- 사용자가 "R석" 등 **좌석 등급**을 언급했을 때, 이를 **좌석 번호**로 착각하여 존재하지 않는 좌석을 만들어내지 마십시오.
+- **도구 출력의 "좌석 등급 분포"를 무시하고 엉뚱한 등급의 좌석을 추천하지 마십시오.** (예: VIP석 구역의 좌석을 R석으로 추천 금지)
+- 사용자의 요청이 "좌석 등급"인지 "특정 좌석 번호"인지 모호하다면, 추측하지 말고 확인 질문을 하십시오.
+- \`create_holding\` 성공은 예약 완료가 아닙니다. **"선점"** 상태일 뿐입니다.
+
+[좌석 선점 후 안내]
+- "선점이 완료되었습니다. 1분 내에 '예약 확정'이라고 말씀해 주세요."라고 안내하십시오.
+- **[중요]** 좌석 선점이 완료되면 UI에 **[좌석 배치도 보기] 버튼**이 자동으로 표시됩니다. **절대로 텍스트 링크(Markdown link)를 생성하여 제공하지 마십시오.** (예: "[좌석 배치도 보기](...)" 금지)
+- 오직 텍스트로만 선점 완료 사실과 주의사항을 안내하십시오.
+- 예약 확정 요청이 오면 \`confirm_reservation\` 도구를 사용하세요.
+
+[좌석 변경 요청 시 처리 절차 (엄격 준수)]
+1. **새로운 좌석 확인(검증)**: 먼저 변경하려는 새로운 좌석(등급/위치)이 가용한지 \`get_ticket_availability\` 등으로 확인하십시오.
+2. **변경 진행 안내**: 가용성이 확인되면, "원하시는 좌석이 확인되었습니다. 기존 좌석 선점을 해제하고 변경을 진행하겠습니다."라고 안내하십시오.
+3. **해제 수행**: 기존 선점 건에 대해 \`release_holding\`을 수행하십시오.
+4. **재선점 수행**: 해제가 완료된 후, 즉시 새로운 좌석에 대해 \`create_holding\`을 수행하십시오.
+5. **결과 안내**: "이전 좌석의 선점을 해제하고, 새로운 좌석을 선점했습니다."라고 명확히 안내하십시오.`;
 
 async function processConverseStream(
     messages: Message[],
@@ -160,8 +208,9 @@ async function processConverseStream(
                         }
 
                         // Capture metadata if create_holding
-                        if (toolName === 'create_holding' && result.success) {
-                            // [Fix] Inject auto-released holdings first
+                        // Capture metadata if create_holding
+                        if (toolName === 'create_holding') {
+                            // [Fix] Inject auto-released holdings first (Run even if create failed)
                             if (result.releasedHoldings && Array.isArray(result.releasedHoldings)) {
                                 result.releasedHoldings.forEach((releasedId: string) => {
                                     actionsToInject.push({
@@ -171,16 +220,20 @@ async function processConverseStream(
                                 });
                             }
 
-                            const expiresAtTime = new Date(result.expiresAt).getTime();
-                            const nowTime = Date.now();
-                            const remainingMs = expiresAtTime - nowTime;
+                            // Only inject created if success
+                            if (result.success) {
+                                const expiresAtTime = new Date(result.expiresAt).getTime();
+                                const nowTime = Date.now();
+                                const remainingMs = expiresAtTime - nowTime;
 
-                            actionsToInject.push({
-                                type: "HOLDING_CREATED",
-                                holdingId: result.holdingId,
-                                expiresAt: result.expiresAt,
-                                remainingMs: remainingMs > 0 ? remainingMs : 60000 // Fallback to 60s if invalid
-                            });
+                                actionsToInject.push({
+                                    type: "HOLDING_CREATED",
+                                    holdingId: result.holdingId,
+                                    expiresAt: result.expiresAt,
+                                    remainingMs: remainingMs > 0 ? remainingMs : 60000, // Fallback to 60s if invalid
+                                    seatMapUrl: result.seatMapUrl
+                                });
+                            }
                         }
 
                         // Capture metadata if confirm_reservation
@@ -236,7 +289,7 @@ async function processConverseStream(
 
 export async function POST(req: NextRequest) {
     try {
-        const { messages, modelId } = await req.json();
+        const { messages, modelId, userId } = await req.json();
 
         if (!messages || !Array.isArray(messages)) {
             return NextResponse.json(
@@ -247,6 +300,12 @@ export async function POST(req: NextRequest) {
 
         // RAG Injection
         let systemPromptText = BASE_SYSTEM_PROMPT;
+
+        // Inject User Context (for Booking)
+        if (userId) {
+            systemPromptText += `\n\n[User Context]\n- Current User ID: "${userId}"\n- 도구 호출 시 create_holding 등의 userId 필드에 이 값을 사용하세요.`;
+        }
+
         // Inject Current Time
         systemPromptText += `\n\n[Current Time]: ${new Date().toISOString()}`;
 
