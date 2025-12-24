@@ -11,7 +11,7 @@ import { LockKeyhole } from "lucide-react"
 
 export default function LoginPage() {
     const router = useRouter()
-    const { login, isLoading } = useAuth()
+    const { login } = useAuth()
     const [error, setError] = React.useState<string>("")
     const [loading, setLoading] = React.useState(false)
 
@@ -27,7 +27,7 @@ export default function LoginPage() {
         try {
             await login(email, password)
             router.push("/")
-        } catch (err) {
+        } catch {
             setError("로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.")
         } finally {
             setLoading(false)

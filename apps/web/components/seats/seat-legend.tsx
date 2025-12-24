@@ -1,6 +1,6 @@
 "use client"
 
-import { Grade } from "@/types/venue"
+import { Grade } from "@mega-ticket/shared-types"
 
 interface SeatLegendProps {
     grades: Grade[];

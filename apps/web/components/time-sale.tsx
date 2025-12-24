@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react"
 import { Clock } from "lucide-react"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+
 
 export function TimeSale() {
     const [timeLeft, setTimeLeft] = useState("10:19:19")

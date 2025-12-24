@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - INTERNAL_API_URL=http://app:3001
+      - NEXT_PUBLIC_API_URL=/api
+    depends_on:
+      - app
+    networks:
+      - megaticket-net
+
+  app:
+    build:
+      context: .
+      dockerfile: apps/app/Dockerfile
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./apps/app/env.example
+    environment:
+      - AWS_REGION=ap-northeast-2
+      - AWS_PROFILE=BedrockDevUser-hyebom
+      - AWS_SDK_LOAD_CONFIG=1
+      - AWS_CONFIG_FILE=/home/nextjs/.aws/config
+      - AWS_SHARED_CREDENTIALS_FILE=/home/nextjs/.aws/credentials
+      - DYNAMODB_TABLE_PERFORMANCES=KDT-Msp4-PLDR-performances
+      - DYNAMODB_TABLE_VENUES=KDT-Msp4-PLDR-venues
+      - DYNAMODB_TABLE_RESERVATIONS=KDT-Msp4-PLDR-reservations
+    volumes:
+      - C:\Users\User\.aws:/home/nextjs/.aws:ro
+    networks:
+      - megaticket-net
+
+networks:
+  megaticket-net:
+    driver: bridge

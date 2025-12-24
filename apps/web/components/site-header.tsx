@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Search, Menu, User, Ticket } from "lucide-react"
@@ -10,7 +10,7 @@ import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
 
 export function SiteHeader() {
-    const pathname = usePathname()
+
     const [isScrolled, setIsScrolled] = useState(false)
     const { user, logout } = useAuth()
 
@@ -30,11 +30,11 @@ export function SiteHeader() {
             <div className="container mx-auto px-4 md:px-8 h-16 flex items-center justify-center gap-8 md:gap-16">
                 {/* Logo & Nav Group - Centered relative to screen with Search */}
                 <div className="flex items-center gap-6">
-                    <a href="/" className="flex items-center gap-2">
+                    <Link href="/" className="flex items-center gap-2">
                         <span className="font-bold text-xl md:text-2xl tracking-tight text-primary">
                             MegaTicket
                         </span>
-                    </a>
+                    </Link>
                     <nav className="hidden md:flex gap-4 lg:gap-6">
                         {[
                             { label: "뮤지컬", href: "#" },

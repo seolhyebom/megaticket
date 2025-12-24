@@ -5,20 +5,23 @@ import { notFound } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin, Info } from "lucide-react"
 
-import { SiteFooter } from "@/components/site-footer"
-import { getPerformance } from "@/lib/server/performance-service"
 
-export default async function PerformancePage({ params }: { params: { id: string } }) {
-    const performance = await getPerformance(params.id)
+import { apiClient } from "@/lib/api-client"
+
+export default async function PerformancePage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    let performance;
+    try {
+        performance = await apiClient.getPerformance(id)
+    } catch {
+        notFound()
+    }
 
     if (!performance) {
         notFound()
     }
 
-    // Define booking date/time logic (Keep existing logic or update if dynamic)
-    // For V5, we can keep the static logic for booking availability if not in DB
-    const bookingDate = "2024.11.22"
-    const bookingTime = "14:00"
+
 
     // Check if booking is open (Example logic)
     // const now = new Date()
@@ -33,7 +36,7 @@ export default async function PerformancePage({ params }: { params: { id: string
                     {/* Background Image */}
                     <div className="absolute inset-0 opacity-40">
                         <Image
-                            src={performance.poster || performance.posterUrl || ""}
+                            src={performance.posterUrl || performance.poster || ""}
                             alt={performance.title}
                             fill
                             className="object-cover blur-md"
@@ -50,7 +53,7 @@ export default async function PerformancePage({ params }: { params: { id: string
                             {/* Poster Image */}
                             <div className="w-[180px] md:w-[260px] aspect-[3/4] relative rounded-lg shadow-2xl overflow-hidden border-2 border-white/20 flex-shrink-0">
                                 <Image
-                                    src={performance.poster || performance.posterUrl || ""}
+                                    src={performance.posterUrl || performance.poster || ""}
                                     alt={performance.title}
                                     fill
                                     className="object-cover"
@@ -66,11 +69,13 @@ export default async function PerformancePage({ params }: { params: { id: string
                                 <h1 className="text-4xl md:text-5xl font-bold leading-tight">{performance.title}</h1>
                                 <div className="flex items-center text-gray-200 text-lg">
                                     <Calendar className="w-5 h-5 mr-2 text-primary" />
-                                    {performance.dateRange || performance.dates[0] + " ~ " + performance.dates[performance.dates.length - 1]}
+                                    {performance.dates && performance.dates.length > 0
+                                        ? (performance.dates[0] + " ~ " + performance.dates[performance.dates.length - 1])
+                                        : (performance.dateRange || "일정 정보 없음")}
                                 </div>
                                 <div className="flex items-center text-gray-200 text-lg">
                                     <MapPin className="w-5 h-5 mr-2 text-primary" />
-                                    {performance.venue}
+                                    {performance.venueId}
                                 </div>
                             </div>
                         </div>
@@ -123,7 +128,7 @@ export default async function PerformancePage({ params }: { params: { id: string
                                         <div className="space-y-2 pt-2">
                                             <span className="text-gray-500 block text-sm">티켓 가격</span>
                                             <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm text-gray-700">
-                                                {(performance.price || "").split(" / ").map((priceItem, idx) => {
+                                                {(performance.price || "").split(" / ").map((priceItem: string, idx: number) => {
                                                     const [grade, ...rest] = priceItem.trim().split(" ");
                                                     const cost = rest.join(" ");
                                                     let badgeColor = "bg-gray-500";

@@ -32,7 +32,9 @@ export default function ReservationCompletePage() {
                 <Link href="/">
                     <Button variant="outline" size="lg">홈으로 이동</Button>
                 </Link>
-                <Button size="lg" disabled>내 예약 보기 (준비중)</Button>
+                <Link href="/my">
+                    <Button size="lg">내 예약 보기</Button>
+                </Link>
             </div>
         </div>
     )

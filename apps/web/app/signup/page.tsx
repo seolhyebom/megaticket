@@ -35,7 +35,7 @@ export default function SignupPage() {
         try {
             await signup(email, password, name)
             router.push("/")
-        } catch (err) {
+        } catch {
             setError("회원가입 중 오류가 발생했습니다.")
         } finally {
             setLoading(false)

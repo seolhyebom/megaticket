@@ -1,14 +1,14 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useSearchParams, usePathname, useRouter } from "next/navigation"
 
 export function RegionIndicator({ region }: { region?: string }) {
     const searchParams = useSearchParams()
     const pathname = usePathname()
     const router = useRouter()
-    const [currentRegion, setCurrentRegion] = useState<string>(region || "unknown")
+
 
     useEffect(() => {
         // Update URL with region if not present (to meet user request "add to address bar")

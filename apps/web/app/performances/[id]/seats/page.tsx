@@ -3,34 +3,46 @@
 import { SeatMap } from "@/components/seats/seat-map"
 import { useSearchParams, useRouter, useParams } from "next/navigation"
 import { reservationStore } from "@/lib/reservation-store"
-import { Seat } from "@/types/venue"
-import { useState, useEffect } from "react"
-import { PERFORMANCES } from "@/lib/performance-data"
+import { useAuth } from "@/contexts/auth-context"
+import { Seat, Performance } from "@mega-ticket/shared-types"
+import { useState, useEffect, Suspense, useCallback } from "react"
 import { Loader2 } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
-export default function SeatsPage() {
+function SeatsContent() {
     const params = useParams()
     const searchParams = useSearchParams()
     const router = useRouter()
 
     const performanceId = params.id as string
 
-    // Get Performance Data to determine valid default date/time
-    const performanceKey = performanceId.startsWith("perf-kinky") ? "perf-kinky-1" : "perf-phantom-of-the-opera-1"
-    const performance = PERFORMANCES[performanceKey]
+    const [performance, setPerformance] = useState<Performance | null>(null);
+    const [performanceTitle, setPerformanceTitle] = useState("")
+    const [performanceLoading, setPerformanceLoading] = useState(true)
+    const [mapLoading, setMapLoading] = useState(true)
 
-    // Default to the first available schedule if no date provided
-    const defaultDate = performance?.schedules[0]?.date || "2025-12-25"
-    const defaultTime = performance?.schedules[0]?.times[0]?.time || "19:00"
+    const date = searchParams.get("date") || "2025-12-25"
+    const time = searchParams.get("time") || "19:00"
 
-    const date = searchParams.get("date") || defaultDate
-    const time = searchParams.get("time") || defaultTime
+    useEffect(() => {
+        setPerformanceLoading(true);
+
+        apiClient.getPerformance(performanceId)
+            .then((data) => {
+                setPerformance(data);
+                if (data.title) setPerformanceTitle(data.title);
+                setPerformanceLoading(false);
+            }).catch(err => {
+                console.error(err);
+                setPerformanceLoading(false);
+            });
+    }, [performanceId]);
 
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [errorMsg, setErrorMsg] = useState<string | null>(null) // State for alert message
-
-    // Clear error message after 3 seconds
+    const [errorMsg, setErrorMsg] = useState<string | null>(null)
     const [showError, setShowError] = useState(false)
+
     useEffect(() => {
         if (showError) {
             const timer = setTimeout(() => {
@@ -41,46 +53,28 @@ export default function SeatsPage() {
         }
     }, [showError])
 
-    // State for dynamic performance data
-    const [performanceTitle, setPerformanceTitle] = useState("")
-    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        // Fetch performance details to get title
-        fetch(`/api/performances/${performanceId}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.title) setPerformanceTitle(data.title)
-                setLoading(false)
-            })
-            .catch(err => {
-                console.error(err)
-                setLoading(false)
-            })
-    }, [performanceId])
+    const { user } = useAuth() // Import useAuth hook
 
-    if (loading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <Loader2 className="w-12 h-12 text-primary animate-spin" />
-                <p className="text-lg font-medium text-gray-600 animate-pulse">좌석 정보를 불러오는 중입니다...</p>
-            </div>
-        )
-    }
+    const handleLoadComplete = useCallback(() => {
+        setMapLoading(false)
+    }, [])
 
     const handleSelectionComplete = async (selectedSeats: Seat[], totalPrice: number) => {
         if (isSubmitting) return
         setIsSubmitting(true)
 
+        // Ensure user is logged in or use a guest ID fallback (though consistent login is preferred)
+        const userId = user?.id || "guest-user-1"
+
         try {
-            // 1. Create Holding
             const res = await fetch("/api/holdings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     performanceId,
                     seats: selectedSeats,
-                    userId: "guest-user-1", // Mock User ID
+                    userId: userId,
                     date,
                     time
                 })
@@ -95,18 +89,16 @@ export default function SeatsPage() {
                 return
             }
 
-            // 2. Save session with DYNAMIC title
             reservationStore.saveSession({
                 performanceId,
-                performanceTitle: performanceTitle || "공연 제목 없음", // Use fetched title
+                performanceTitle: performanceTitle || "공연 제목 없음",
                 date,
                 time,
                 seats: selectedSeats,
                 totalPrice,
-                venue: performance?.venue || "Charlotte Theater" // Use correct venue
+                venue: performance?.venue || "Charlotte Theater"
             })
 
-            // 3. Redirect
             const expiresAtParam = data.expiresAt ? `&expiresAt=${encodeURIComponent(data.expiresAt)}` : ''
             router.push(`/reservation/confirm?holdingId=${data.holdingId}${expiresAtParam}`)
 
@@ -118,9 +110,19 @@ export default function SeatsPage() {
         }
     }
 
+    const isLoading = performanceLoading || mapLoading;
+
     return (
-        <div className="h-[calc(100vh-64px)] flex flex-col relative">
-            {/* Error Alert Overlay */}
+        <div className="h-[calc(100vh-64px)] flex flex-col relative overflow-hidden">
+            {/* Unified Loading Overlay */}
+            {isLoading && (
+                <div className="absolute inset-0 z-[100] bg-white flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300">
+                    <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                    <p className="text-lg font-medium text-gray-600 animate-pulse">좌석 정보를 불러오는 중입니다...</p>
+                </div>
+            )}
+
+            {/* Error Message Overlay */}
             {showError && errorMsg && (
                 <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] animate-in fade-in zoom-in duration-300 pointer-events-none">
                     <div className="bg-red-400/90 text-white px-8 py-4 rounded-full shadow-2xl backdrop-blur-sm flex items-center gap-3">
@@ -130,14 +132,28 @@ export default function SeatsPage() {
                 </div>
             )}
 
+            {/* SeatMap Area */}
             <SeatMap
-                venueId="sample-theater"
                 performanceId={performanceId}
                 date={date}
                 time={time}
-                isSubmitting={isSubmitting} // Added
+                isSubmitting={isSubmitting}
                 onSelectionComplete={handleSelectionComplete}
+                onLoadComplete={handleLoadComplete}
             />
         </div>
+    )
+}
+
+export default function SeatsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                <p className="text-lg font-medium text-gray-600 animate-pulse">좌석 정보를 불러오는 중입니다...</p>
+            </div>
+        }>
+            <SeatsContent />
+        </Suspense>
     )
 }

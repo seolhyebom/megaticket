@@ -1,26 +1,28 @@
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { VenueData, Seat } from "@/types/venue" // Removed unused Grade import
+import { VenueData, Seat, SeatStatus, Section, Row, Grade } from "@mega-ticket/shared-types"
 import { TheaterTemplate } from "./templates/theater-template"
 import { SeatLegend } from "./seat-legend"
 import { Button } from "@/components/ui/button"
 import { RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+import { apiClient } from "@/lib/api-client"
+
 // Mock import for now - in real app fetch from API
-import sampleTheater from "@/data/venues/charlotte-theater.json"
+// import sampleTheater from "@/data/venues/charlotte-theater.json"
 
 interface SeatMapProps {
-    venueId: string;
     performanceId: string;
     date: string;
     time: string;
-    isSubmitting: boolean; // Added
+    isSubmitting: boolean;
     onSelectionComplete: (selectedSeats: Seat[], totalPrice: number) => void;
+    onLoadComplete?: () => void;
 }
 
-export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSelectionComplete }: SeatMapProps) {
+export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionComplete, onLoadComplete }: SeatMapProps) {
     const [venueData, setVenueData] = useState<VenueData | null>(null)
     const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([])
     const [selectedFloor, setSelectedFloor] = useState<string>("1층")
@@ -30,69 +32,79 @@ export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSe
 
     // Request ID for race condition protection
     const lastRequestIdRef = useRef<number>(0);
+    const onLoadCompleteRef = useRef(onLoadComplete);
+
+    useEffect(() => {
+        onLoadCompleteRef.current = onLoadComplete;
+    }, [onLoadComplete]);
 
     const fetchVenueData = useCallback(async (silent = false) => {
         const requestId = ++lastRequestIdRef.current;
         if (!silent) setLoading(true)
         try {
-            // 1. Get Mock Venue Data (Fallback)
-            // We use JSON.parse(JSON.stringify()) to create a deep copy we can modify (adding seats)
-            const data = JSON.parse(JSON.stringify(sampleTheater)) as VenueData;
+            // 1. Get Performance to find venueId
+            const performance = await apiClient.getPerformance(performanceId);
+            const venueId = performance.venueId || 'charlotte-theater';
 
-            // Generate Seats if empty (Auto-generate based on length property in JSON)
-            data.sections.forEach(section => {
-                section.rows.forEach((row: any) => {
-                    // Check if seats are empty but length is provided
-                    if ((!row.seats || row.seats.length === 0) && row.length) {
-                        const length = row.length;
-                        row.seats = Array.from({ length }, (_, i) => ({
-                            seatId: `${section.sectionId}-${row.rowId}-${i + 1}`,
+            // 2. Fetch Base Venue Data from API
+            const data = await apiClient.getVenue(venueId);
+
+            interface RowData {
+                rowId: string;
+                grade: string;
+                seats: Seat[];
+                length?: number;
+            }
+
+            // Generate Seats if empty (in case API doesn't expand them)
+            data.sections.forEach((section: Section) => {
+                section.rows.forEach((row: unknown) => {
+                    const rowData = row as RowData;
+                    if ((!rowData.seats || rowData.seats.length === 0) && rowData.length) {
+                        const length = rowData.length;
+                        rowData.seats = Array.from({ length }, (_, i) => ({
+                            seatId: `${section.sectionId}-${rowData.rowId}-${i + 1}`,
                             seatNumber: i + 1,
-                            rowId: row.rowId,
-                            grade: row.grade,
-                            status: 'available'
+                            rowId: rowData.rowId,
+                            status: 'available' as SeatStatus,
+                            grade: rowData.grade
                         }));
                     }
                 });
             });
 
-            // Try fetching real venue data if API available (for V5)
-            // try {
-            //    const venueRes = await fetch(`/api/venues/${venueId}`);
-            //    if (venueRes.ok) { ... merge or use ... }
-            // } catch (e) {}
+            // 3. Fetch Real-time Seat Status
+            const statusResponse = await apiClient.getSeatStatus(performanceId, date, time);
+            const statusMap = statusResponse.seats;
 
-            // 2. Get Real-time Seat Status (Add timestamp to prevent caching)
-            const statusRes = await fetch(`/api/seats/${performanceId}?date=${date}&time=${time}&t=${new Date().getTime()}`, { cache: 'no-store' });
-
-            // Race Condition Check: If a newer request started, ignore this response
             if (requestId !== lastRequestIdRef.current) return;
 
-            if (statusRes.ok) {
-                const statusData = await statusRes.json();
-                const statusMap = statusData.seats;
-
-                // 3. Merge Status
-                data.sections.forEach(section => {
-                    section.rows.forEach(row => {
-                        row.seats.forEach(seat => {
+            // Apply Status Map to Seats
+            data.sections.forEach((section: Section) => {
+                section.rows.forEach((row: unknown) => {
+                    const rowData = row as RowData;
+                    if (rowData.seats) {
+                        rowData.seats.forEach(seat => {
                             if (statusMap[seat.seatId]) {
                                 seat.status = statusMap[seat.seatId];
                             }
                         });
-                    });
+                    }
                 });
-            }
+            });
 
-            setVenueData(data);
+            setVenueData(data)
         } catch (error) {
-            console.error("Failed to load seat data", error);
+            console.error("Failed to fetch venue data:", error)
         } finally {
             if (requestId === lastRequestIdRef.current) {
-                if (!silent) setLoading(false);
+                setLoading(false)
+                if (!silent) {
+                    onLoadCompleteRef.current?.()
+                }
             }
         }
-    }, [performanceId, date, time, venueId])
+    }, [performanceId, date, time])
 
     useEffect(() => {
         fetchVenueData(false);
@@ -140,11 +152,17 @@ export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSe
     const getSelectedSeatsData = () => {
         if (!venueData) return [];
         const seats: Seat[] = [];
-        venueData.sections.forEach(section => {
-            section.rows.forEach(row => {
-                row.seats.forEach(seat => {
+        venueData.sections.forEach((section: Section) => {
+            section.rows.forEach((row: Row) => {
+                row.seats.forEach((seat: Seat) => {
                     if (selectedSeatIds.includes(seat.seatId)) {
-                        seats.push(seat);
+                        // Find price from grades
+                        const gradeInfo = venueData.grades.find(g => g.grade === seat.grade);
+                        const seatWithPrice = {
+                            ...seat,
+                            price: gradeInfo ? Number(gradeInfo.price) : 0
+                        };
+                        seats.push(seatWithPrice as any);
                     }
                 })
             })
@@ -157,7 +175,7 @@ export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSe
         if (!venueData) return 0;
         const seats = getSelectedSeatsData();
         return seats.reduce((total, seat) => {
-            const grade = venueData.grades.find(g => g.grade === seat.grade);
+            const grade = venueData.grades.find((g: Grade) => g.grade === seat.grade);
             return total + (grade ? grade.price : 0);
         }, 0);
     }
@@ -168,7 +186,7 @@ export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSe
         onSelectionComplete(seats, total);
     }
 
-    if (!venueData && loading) return <div className="p-10 text-center">좌석 정보를 불러오는 중입니다...</div>
+    if (!venueData && loading) return null;
     if (!venueData) return <div className="p-10 text-center text-red-500">데이터 로드 실패</div>
 
     return (
@@ -235,7 +253,7 @@ export function SeatMap({ venueId, performanceId, date, time, isSubmitting, onSe
                     background: hsl(var(--primary) / 0.8);
                 }
             `}</style>
-            <div className="flex-1 overflow-hidden flex flex-col items-center custom-scrollbar pt-0">
+            <div className="flex-1 overflow-auto min-h-0 flex flex-col items-center custom-scrollbar pt-0 w-full relative">
                 {venueData.venueType === 'theater' && (
                     <TheaterTemplate
                         key={venueData.venueId}

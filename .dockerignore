@@ -1,0 +1,10 @@
+node_modules
+**/.next
+**/node_modules
+dist
+.turbo
+.git
+.env
+.DS_Store
+apps/prototype
+**/.venv

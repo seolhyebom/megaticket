@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -13,7 +13,11 @@
     "@aws-sdk/client-bedrock-runtime": "^3.953.0",
     "@aws-sdk/client-dynamodb": "^3.953.0",
     "@aws-sdk/lib-dynamodb": "^3.953.0",
+    "@mega-ticket/shared-types": "*",
+    "@mega-ticket/shared-utils": "*",
     "@radix-ui/react-avatar": "^1.1.11",
+    "@radix-ui/react-dialog": "^1.1.2",
+    "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-scroll-area": "^1.2.10",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",

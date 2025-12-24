@@ -117,11 +117,35 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
 
 
                                     {reservation.seats.map((seat, idx) => {
-                                        // Fallback logic for seat display
-                                        // Priority: seatNumber (explicit) -> seatId -> row-number -> "좌석 정보 없음"
-                                        const seatLabel = seat.seatNumber
-                                            ? seat.seatNumber
-                                            : (seat.seatId ? seat.seatId : (seat.row && seat.number ? `${seat.row}-${seat.number}` : ""));
+                                        // Improved seat label logic
+                                        let seatLabel = "";
+
+                                        // Parse seatId (Standard format: Section-Row-Number or Floor-Section-Row-Number)
+                                        // Example: A-1-5 or 1F-A-1-5
+                                        if (seat.seatId) {
+                                            const parts = seat.seatId.split('-');
+                                            if (parts.length >= 3) {
+                                                const section = parts[parts.length - 3];
+                                                const row = parts[parts.length - 2];
+                                                const number = parts[parts.length - 1];
+
+                                                // Determine floor based on section (A,B,C,OP -> 1F / D,E,F -> 2F)
+                                                // This is Charlotte Theater specific logic but consistent with other parts of the app
+                                                const floor = ['A', 'B', 'C', 'OP'].includes(section) ? '1층' : (['D', 'E', 'F'].includes(section) ? '2층' : '');
+
+                                                // Format: "1층 VIP석 A구역 2열 15번" or similar
+                                                // User requested: "1층 VIP석 구역 22" or "VIP석 1층-B-2-22"
+                                                // Let's go with "1층 A구역 2열 15번" style + Grade
+                                                seatLabel = `${floor ? floor + ' ' : ''}${section}구역 ${row}열 ${number}번`;
+                                            }
+                                        }
+
+                                        // Fallback if parsing failed but we have individual fields
+                                        if (!seatLabel) {
+                                            seatLabel = seat.seatNumber
+                                                ? `${seat.seatNumber}번`
+                                                : (seat.seatId || "좌석 정보 없음");
+                                        }
 
                                         return (
                                             <Badge key={idx} variant="outline" className="bg-gray-50 font-normal">

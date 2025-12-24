@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "esnext"
+        ],
+        "strict": true,
+        "esModuleInterop": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "jsx": "preserve",
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@mega-ticket/shared-types": [
+                "packages/shared-types/src"
+            ],
+            "@mega-ticket/shared-utils": [
+                "packages/shared-utils/src"
+            ]
+        }
+    }
+}

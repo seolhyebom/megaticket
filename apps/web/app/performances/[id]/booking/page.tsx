@@ -1,47 +1,27 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react" // Added useEffect
+import { useState, useMemo, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Users, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, Calendar, Clock, MapPin, Loader2 } from "lucide-react"
 
-// import { PERFORMANCES } from "@/lib/performance-data" // Commented out
-import { notFound } from "next/navigation" // Added
-
-interface Performance {
-    title: string;
-    poster: string;
-    venue: string;
-    schedules: Array<{
-        date: string;
-        dayOfWeek: string;
-        times: Array<{
-            time: string;
-            status: string;
-            availableSeats: number;
-        }>;
-    }>;
-    // add other fields if used
-}
+import { apiClient } from "@/lib/api-client"
+import { Performance, PerformanceSchedule } from "@mega-ticket/shared-types"
 
 export default function BookingPage() {
     const params = useParams()
     const router = useRouter()
-    const id = params.id as string // Kept for consistency, though params.id is used directly in fetch
+    const id = params.id as string
 
     // Fetch performance data
-    const [performance, setPerformance] = useState<Performance | null>(null) // Changed type to Performance | null
+    const [performance, setPerformance] = useState<Performance | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         if (!params.id) return;
 
-        fetch(`/api/performances/${params.id}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Failed to fetch")
-                return res.json()
-            })
+        apiClient.getPerformance(params.id as string)
             .then(data => {
                 setPerformance(data)
                 setLoading(false)
@@ -49,8 +29,6 @@ export default function BookingPage() {
             .catch(err => {
                 console.error(err)
                 setLoading(false)
-                // Handle error or use fallback logic here if needed
-                // For now, if fetch fails, performance will remain null
             })
     }, [params.id])
 
@@ -63,12 +41,13 @@ export default function BookingPage() {
 
     // 해당 월의 스케줄 날짜들
     const scheduleDates = useMemo(() => {
-        return new Set(performance?.schedules?.map(s => s.date) || [])
+        return new Set(performance?.schedules?.map((s: PerformanceSchedule) => s.date) || [])
     }, [performance])
 
     // 선택된 날짜의 회차 정보
     const selectedSchedule = useMemo(() => {
-        return performance?.schedules.find(s => s.date === selectedDate)
+        if (!performance?.schedules) return undefined
+        return performance.schedules.find((s: PerformanceSchedule) => s.date === selectedDate)
     }, [performance, selectedDate])
 
     // 달력 생성
@@ -227,7 +206,7 @@ export default function BookingPage() {
                                 <p className="text-sm text-gray-500 mb-4">
                                     {formatDate(selectedDate)} ({selectedSchedule?.dayOfWeek})
                                 </p>
-                                {selectedSchedule?.times.map((slot, idx) => (
+                                {selectedSchedule?.times.map((slot: { time: string; seatCount: number; status?: string; availableSeats?: number }, idx: number) => (
                                     <button
                                         key={idx}
                                         onClick={() => slot.status !== "soldout" && setSelectedTime(slot.time)}
@@ -270,14 +249,14 @@ export default function BookingPage() {
                     <div className="bg-white rounded-lg shadow-sm p-6">
                         <div className="flex items-start gap-4 mb-6">
                             <div className="w-20 h-28 relative rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                <Image src={performance.poster} alt={performance.title} fill className="object-cover" />
+                                <Image src={performance.posterUrl || (performance as any).poster || ""} alt={performance.title} fill className="object-cover" />
                             </div>
                             <div>
                                 <span className="text-xs text-primary font-medium">뮤지컬</span>
                                 <h4 className="font-bold text-lg">{performance.title}</h4>
                                 <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
                                     <MapPin className="w-3 h-3" />
-                                    {performance.venue}
+                                    {performance.venue || performance.venueId}
                                 </p>
                             </div>
                         </div>
@@ -297,7 +276,7 @@ export default function BookingPage() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">장소</span>
-                                <span className="font-medium">{performance.venue}</span>
+                                <span className="font-medium">{performance.venue || performance.venueId}</span>
                             </div>
                         </div>
 

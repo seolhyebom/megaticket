@@ -1,6 +1,6 @@
 "use client"
 
-import { Seat, Grade, SeatStatus } from "@/types/venue"
+import { Seat, Grade, SeatStatus } from "@mega-ticket/shared-types"
 import { cn } from "@/lib/utils"
 
 interface SeatButtonProps {

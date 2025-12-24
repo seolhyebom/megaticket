@@ -1,14 +1,15 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useCallback, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { reservationStore, ReservationSession } from "@/lib/reservation-store"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, MapPin, Ticket } from "lucide-react"
+import { apiClient } from "@/lib/api-client"
 
-export default function ReservationConfirmPage() {
+function ReservationConfirmContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const holdingId = searchParams.get('holdingId')
@@ -17,6 +18,31 @@ export default function ReservationConfirmPage() {
     const [session, setSession] = useState<ReservationSession | null>(null)
     const [timeLeft, setTimeLeft] = useState(60) // Default fallback
     const [isProcessing, setIsProcessing] = useState(false)
+
+    const isConfirmedRef = useRef(false) // Track if reservation is confirmed to prevent auto-release
+    const isTimeoutHandled = useRef(false) // Prevent multiple alerts
+
+    const handleTimeout = useCallback(async () => {
+        isTimeoutHandled.current = true
+        try {
+            if (holdingId) {
+                await apiClient.deleteHolding(holdingId)
+            }
+            alert('예약 시간이 초과되었습니다. 다시 좌석을 선택해주세요.')
+
+            // Redirect to original performance page
+            if (session?.performanceId) {
+                const performaceUrl = `/performances/${session.performanceId}/seats?date=${session.date}&time=${session.time}`
+                router.push(performaceUrl)
+            } else {
+                router.push('/')
+            }
+
+        } catch (e) {
+            console.error("Timeout cleanup failed", e)
+            router.push('/')
+        }
+    }, [holdingId, router, session?.date, session?.performanceId, session?.time])
 
     // 1. Initial Load & Session Check
     useEffect(() => {
@@ -36,10 +62,7 @@ export default function ReservationConfirmPage() {
             const now = new Date()
             const diffSeconds = Math.floor((expireDate.getTime() - now.getTime()) / 1000)
 
-            // If already expired or invalid, default to 0 or keeping default logic (which handles timeout)
             if (!isNaN(diffSeconds)) {
-                // If diff is greater than 60 (sanity check) or less than 0, handle appropriately
-                // But generally trust the server time diff
                 setTimeLeft(diffSeconds > 0 ? diffSeconds : 0)
             }
         }
@@ -57,7 +80,6 @@ export default function ReservationConfirmPage() {
 
             if (diff <= 0) {
                 setTimeLeft(0)
-                // Only trigger timeout if it wasn't already handled
                 if (!isTimeoutHandled.current) {
                     handleTimeout()
                 }
@@ -66,93 +88,36 @@ export default function ReservationConfirmPage() {
             }
         }
 
-        // Initial check
         updateTimer()
-
         const timer = setInterval(updateTimer, 1000)
-
         return () => clearInterval(timer)
-    }, [session, holdingId, expiresAt])
-
-    const isConfirmedRef = useRef(false) // Track if reservation is confirmed to prevent auto-release
-    const isTimeoutHandled = useRef(false) // Prevent multiple alerts
-
-    // 3. Auto-release on unmount (Browser Back / Close)
-    // 3. Auto-release on unmount (Browser Back / Close)
-    // NOTE: Disabled to prevent immediate release in React Strict Mode (Double Invocation).
-    // Relying on TTL (60s) and explicit 'Cancel' button is safer.
-    /*
-    useEffect(() => {
-        return () => {
-            if (!isConfirmedRef.current && holdingId) {
-                // Use keepalive to ensure request completes after unload
-                fetch(`/api/holdings/${holdingId}`, {
-                    method: 'DELETE',
-                    keepalive: true
-                }).catch(e => console.error("Auto-release failed", e))
-            }
-        }
-    }, [holdingId])
-    */
-
-    const handleTimeout = async () => {
-        isTimeoutHandled.current = true
-        try {
-            await fetch(`/api/holdings/${holdingId}`, { method: 'DELETE' })
-            alert('예약 시간이 초과되었습니다. 다시 좌석을 선택해주세요.')
-
-            // Redirect to original performance page
-            if (session?.performanceId) {
-                // Use the correct URL structure. Assuming date/time are needed for context, 
-                // but basic redirect to seat selection is enough.
-                // Reconstruct query params if possible, or just go to seat page.
-                const performaceUrl = `/performances/${session.performanceId}/seats?date=${session.date}&time=${session.time}`
-                router.push(performaceUrl)
-            } else {
-                router.push('/')
-            }
-
-        } catch (e) {
-            console.error("Timeout cleanup failed", e)
-            router.push('/')
-        }
-    }
+    }, [session, holdingId, expiresAt, handleTimeout])
 
     const handlePayment = async () => {
         if (isProcessing) return
         setIsProcessing(true)
 
         try {
-            const res = await fetch('/api/reservations', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    holdingId,
-                    performanceTitle: session?.performanceTitle,
-                    venue: "Mega Arts Center - Grand Theater"
-                })
-            })
+            if (!session) throw new Error("Session not found");
 
-            const data = await res.json()
+            await apiClient.createReservation({
+                holdingId: holdingId!,
+                performanceTitle: session.performanceTitle,
+                venue: "Charlotte Theater"
+            });
 
-            if (!res.ok) {
-                // If 410 Gone, it means expired
-                if (res.status === 410) {
-                    alert("예약 시간이 만료되었습니다.")
-                    router.push('/')
-                } else {
-                    alert(data.message || "예약 처리에 실패했습니다.")
-                }
-                return
-            }
-
-            // Success: Mark as confirmed to skip cleanup
             isConfirmedRef.current = true
             router.push("/reservation/complete")
 
-        } catch (e) {
+        } catch (e: unknown) {
             console.error(e)
-            alert("결제 처리 중 오류가 발생했습니다.")
+            const err = e as Error;
+            if (err.message === "Expired") {
+                alert("예약 시간이 만료되었습니다.")
+                router.push('/')
+            } else {
+                alert(err.message || "결제 처리 중 오류가 발생했습니다.")
+            }
         } finally {
             setIsProcessing(false)
         }
@@ -165,9 +130,12 @@ export default function ReservationConfirmPage() {
     }
 
     const handleCancel = async () => {
-        // Explicitly release holding on user action
         if (holdingId) {
-            await fetch(`/api/holdings/${holdingId}`, { method: 'DELETE' }).catch(e => console.error(e))
+            try {
+                await apiClient.deleteHolding(holdingId)
+            } catch (e) {
+                console.error(e)
+            }
         }
         router.back()
     }
@@ -177,7 +145,6 @@ export default function ReservationConfirmPage() {
     return (
         <div className="container mx-auto max-w-xl py-4 px-4 h-full flex flex-col justify-center items-center">
             <Card className="shadow-lg w-full overflow-hidden border-none ring-1 ring-gray-200 p-0 relative">
-                {/* Timer Banner */}
                 <div className={`absolute top-0 left-0 right-0 h-1 z-10 transition-all duration-1000 ${timeLeft < 10 ? 'bg-red-500' : 'bg-primary'}`} style={{ width: `${(timeLeft / 60) * 100}%` }} />
 
                 <CardHeader className="bg-primary/10 border-b py-4 m-0 relative">
@@ -193,7 +160,6 @@ export default function ReservationConfirmPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-4 pb-2 px-6 bg-white">
-
                     <div className="grid grid-cols-2 gap-2 text-sm bg-gray-50/80 p-3 rounded-xl border border-gray-100 mt-2">
                         <div className="flex items-center gap-2">
                             <Calendar className="w-3.5 h-3.5 text-gray-500" />
@@ -220,7 +186,11 @@ export default function ReservationConfirmPage() {
                             {session.seats.map(seat => (
                                 <div key={seat.seatId} className="flex justify-between items-center text-sm p-1 hover:bg-white rounded transition-colors">
                                     <span className="font-medium text-gray-600">{seat.grade}석 {seat.rowId}열 {seat.seatNumber}번</span>
-                                    <span className="text-gray-900 font-bold tracking-tight">{seat.grade === "VIP" ? "150,000" : seat.grade === "R" ? "120,000" : seat.grade === "S" ? "90,000" : "60,000"}원</span>
+                                    <span className="text-gray-900 font-bold tracking-tight">
+                                        {((seat as any).price > 0
+                                            ? (seat as any).price.toLocaleString()
+                                            : "가격 정보 없음")}원
+                                    </span>
                                 </div>
                             ))}
                             <Separator className="my-2 opacity-50" />
@@ -230,7 +200,6 @@ export default function ReservationConfirmPage() {
                             </div>
                         </div>
                     </div>
-
                 </CardContent>
                 <CardFooter className="flex flex-col gap-2 py-4 px-6 bg-gray-50/30">
                     <Button
@@ -246,5 +215,13 @@ export default function ReservationConfirmPage() {
                 </CardFooter>
             </Card>
         </div>
+    )
+}
+
+export default function ReservationConfirmPage() {
+    return (
+        <Suspense fallback={<div className="p-20 text-center">로딩 중...</div>}>
+            <ReservationConfirmContent />
+        </Suspense>
     )
 }

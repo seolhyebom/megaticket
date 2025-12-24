@@ -1,5 +1,6 @@
 
 import type { Metadata } from "next";
+import React, { Suspense } from "react";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -25,7 +26,9 @@ export default function RootLayout({
             {children}
           </main>
           <SiteFooter />
-          <RegionIndicator region={process.env.AWS_REGION || "ap-northeast-2"} />
+          <Suspense fallback={null}>
+            <RegionIndicator region={process.env.AWS_REGION || "ap-northeast-2"} />
+          </Suspense>
         </AuthProvider>
       </body>
     </html>

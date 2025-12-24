@@ -1,6 +1,6 @@
 "use client"
 
-import { VenueData } from "@/types/venue"
+import { VenueData } from "@mega-ticket/shared-types"
 import { SeatButton } from "../seat-button"
 import { cn } from "@/lib/utils"
 import { useRef, useEffect } from "react"

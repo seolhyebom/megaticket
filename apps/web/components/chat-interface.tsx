@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Send, Bot, User, Loader2, RefreshCcw, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { apiClient } from "@/lib/api-client";
 import { ModelSelector } from "@/components/model-selector";
 
 interface Message {
@@ -188,15 +189,7 @@ export function ChatInterface() {
                 content: [{ text: m.content }]
             }));
 
-            const response = await fetch("/api/chat", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    messages: apiMessages,
-                    modelId: modelId,
-                    userId: user?.id // Pass current user ID
-                }),
-            });
+            const response = await apiClient.chat(apiMessages, modelId, user?.id);
 
             if (!response.ok) throw new Error("Failed to send message");
             if (!response.body) throw new Error("No response body");

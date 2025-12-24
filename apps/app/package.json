@@ -1,0 +1,25 @@
+{
+    "name": "app",
+    "version": "1.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "next dev -p 3001",
+        "build": "next build",
+        "start": "next start -p 3001"
+    },
+    "dependencies": {
+        "next": "^15.5.9",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "@aws-sdk/client-dynamodb": "^3.953.0",
+        "@aws-sdk/lib-dynamodb": "^3.953.0",
+        "@aws-sdk/client-bedrock-runtime": "^3.953.0",
+        "@mega-ticket/shared-types": "*"
+    },
+    "devDependencies": {
+        "typescript": "^5",
+        "@types/node": "^20",
+        "@types/react": "^19",
+        "@types/react-dom": "^19"
+    }
+}

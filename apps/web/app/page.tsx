@@ -1,9 +1,12 @@
-
+import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import { HomeCarousel } from "@/components/home-carousel"
 import { TimeSale } from "@/components/time-sale"
 import { ScrollToTop } from "@/components/scroll-to-top"
+
+
 
 export default function Home() {
   const newArrivals = [
@@ -90,18 +93,28 @@ export default function Home() {
   )
 }
 
-function SimpleCard({ item, bgWhite = false }: { item: any, bgWhite?: boolean }) {
+interface SimpleCardItem {
+  id?: string;
+  title: string;
+  category: string;
+  discount?: string;
+  price: string;
+  badge?: string;
+  image?: string;
+}
+
+function SimpleCard({ item, bgWhite = false }: { item: SimpleCardItem, bgWhite?: boolean }) {
   const CardWrapper = ({ children }: { children: React.ReactNode }) => {
     if (item.id) {
-      // Next.js Link로 감싸기 위해 동적 import 대신 a 태그 사용
-      return <a href={`/performances/${item.id}`} className="block">{children}</a>
+      // Use Next.js Link instead of a tag
+      return <Link href={`/performances/${item.id}`} className="block">{children}</Link>
     }
     return <>{children}</>
   }
 
   return (
     <CardWrapper>
-      <Card className={`group border-none shadow-none bg-transparent hover:bg-transparent cursor-pointer`}>
+      <Card className={`group border-none shadow-none hover:bg-transparent cursor-pointer ${bgWhite ? 'bg-white' : 'bg-transparent'}`}>
         <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-200 mb-3 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
           {item.badge && (
             <div className={`absolute top-3 left-3 z-10 ${item.badge === 'HOT' ? 'bg-red-500 text-white' : 'bg-yellow-400 text-black'} text-xs font-bold px-2 py-1 rounded`}>
@@ -109,7 +122,13 @@ function SimpleCard({ item, bgWhite = false }: { item: any, bgWhite?: boolean })
             </div>
           )}
           {item.image ? (
-            <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+            <Image
+              src={item.image}
+              alt={item.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 25vw"
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
               Image
