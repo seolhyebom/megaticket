@@ -9,6 +9,7 @@ import { RotateCcw } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 import { apiClient } from "@/lib/api-client"
+import { parsePriceString } from "@/lib/utils"
 
 // Mock import for now - in real app fetch from API
 // import sampleTheater from "@/data/venues/charlotte-theater.json"
@@ -47,7 +48,23 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
             const venueId = performance.venueId || 'charlotte-theater';
 
             // 2. Fetch Base Venue Data from API
-            const data = await apiClient.getVenue(venueId);
+            const baseVenue = await apiClient.getVenue(venueId);
+
+            // 3. Combine Data (V7.7 Guide: Prioritize Performance Sections/Grades)
+            // Fix: Only overwrite sections if performance.sections has valid data (length > 0)
+            // Denormalization might result in empty array if not fully synced, so we fallback to baseVenue.
+            const perfSections = performance.sections && performance.sections.length > 0 ? performance.sections : undefined;
+            const priceMap = parsePriceString(performance.price || "");
+            const data: any = {
+                ...baseVenue,
+                sections: perfSections || baseVenue.sections || [],
+                hasOPSeats: performance.hasOPSeats ?? true, // Default to true if undefined
+                grades: (performance.seatGrades || []).map((sg: any) => ({
+                    ...sg,
+                    price: sg.price || priceMap[sg.grade] || 0,
+                    color: (performance.seatColors && performance.seatColors[sg.grade]) || sg.color
+                }))
+            };
 
             interface RowData {
                 rowId: string;
@@ -57,41 +74,49 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
             }
 
             // Generate Seats if empty (in case API doesn't expand them)
-            data.sections.forEach((section: Section) => {
-                section.rows.forEach((row: unknown) => {
-                    const rowData = row as RowData;
-                    if ((!rowData.seats || rowData.seats.length === 0) && rowData.length) {
-                        const length = rowData.length;
-                        rowData.seats = Array.from({ length }, (_, i) => ({
-                            seatId: `${section.sectionId}-${rowData.rowId}-${i + 1}`,
-                            seatNumber: i + 1,
-                            rowId: rowData.rowId,
-                            status: 'available' as SeatStatus,
-                            grade: rowData.grade
-                        }));
-                    }
-                });
-            });
-
-            // 3. Fetch Real-time Seat Status
-            const statusResponse = await apiClient.getSeatStatus(performanceId, date, time);
-            const statusMap = statusResponse.seats;
-
-            if (requestId !== lastRequestIdRef.current) return;
-
-            // Apply Status Map to Seats
-            data.sections.forEach((section: Section) => {
-                section.rows.forEach((row: unknown) => {
-                    const rowData = row as RowData;
-                    if (rowData.seats) {
-                        rowData.seats.forEach(seat => {
-                            if (statusMap[seat.seatId]) {
-                                seat.status = statusMap[seat.seatId];
+            if (data.sections) {
+                data.sections.forEach((section: Section) => {
+                    if (section.rows) {
+                        section.rows.forEach((row: unknown) => {
+                            const rowData = row as RowData;
+                            if ((!rowData.seats || rowData.seats.length === 0) && rowData.length) {
+                                const length = rowData.length;
+                                rowData.seats = Array.from({ length }, (_, i) => ({
+                                    seatId: `${section.sectionId}-${rowData.rowId}-${i + 1}`,
+                                    seatNumber: i + 1,
+                                    rowId: rowData.rowId,
+                                    status: 'available' as SeatStatus,
+                                    grade: rowData.grade
+                                }));
                             }
                         });
                     }
                 });
-            });
+            }
+
+            // 4. Fetch Real-time Seat Status
+            const statusResponse = await apiClient.getSeatStatus(performanceId, date, time);
+            const statusMap = statusResponse.seats || {};
+
+            if (requestId !== lastRequestIdRef.current) return;
+
+            // Apply Status Map to Seats
+            if (data.sections) {
+                data.sections.forEach((section: Section) => {
+                    if (section.rows) {
+                        section.rows.forEach((row: unknown) => {
+                            const rowData = row as RowData;
+                            if (rowData.seats) {
+                                rowData.seats.forEach(seat => {
+                                    if (statusMap[seat.seatId]) {
+                                        seat.status = statusMap[seat.seatId];
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
+            }
 
             setVenueData(data)
         } catch (error) {
@@ -156,11 +181,12 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
             section.rows.forEach((row: Row) => {
                 row.seats.forEach((seat: Seat) => {
                     if (selectedSeatIds.includes(seat.seatId)) {
-                        // Find price from grades
-                        const gradeInfo = venueData.grades.find(g => g.grade === seat.grade);
+                        // Find price from parsed grades in venueData
+                        const gradeInfo = venueData.grades.find((g: any) => g.grade === seat.grade);
                         const seatWithPrice = {
                             ...seat,
-                            price: gradeInfo ? Number(gradeInfo.price) : 0
+                            price: gradeInfo ? Number(gradeInfo.price) : 0,
+                            color: gradeInfo ? gradeInfo.color : '#CCCCCC'
                         };
                         seats.push(seatWithPrice as any);
                     }
@@ -261,32 +287,88 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
                         selectedSeats={selectedSeatIds}
                         selectedFloor={selectedFloor}
                         onSeatClick={handleSeatClick}
+                        hasOPSeats={venueData.hasOPSeats}
                     />
                 )}
             </div>
 
             {/* Legend & Summary */}
             <div className="mt-auto bg-white border-t rounded-t-xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-10 relative">
-                <SeatLegend grades={venueData.grades} />
+                <SeatLegend grades={venueData.grades} hasOPSeats={venueData.hasOPSeats} />
 
                 <div className="flex justify-center p-6 border-t bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                    <div className="flex items-center justify-between w-full max-w-4xl px-8">
-                        <div className="flex flex-col items-start min-w-[200px]">
+                    <div className="flex items-center justify-between w-full max-w-4xl px-8 gap-4">
+                        {/* V7.13: 선택 좌석 영역 - flex-1로 반응형, max-h와 overflow 추가 */}
+                        <div className="flex flex-col items-start flex-1 min-w-0">
                             <p className="text-sm text-muted-foreground mb-1.5 ml-1">선택한 좌석</p>
-                            <div className="flex gap-2 min-h-[32px] p-1">
+                            {/* V7.11: 4매 선택 시 한 줄에 표시되도록 가로 스크롤 */}
+                            <div className="flex gap-2 min-h-[32px] p-1 overflow-x-auto max-w-full" style={{ scrollbarWidth: 'thin' }}>
                                 {selectedSeatIds.length > 0 ? (
-                                    selectedSeatIds.map(id => (
-                                        <span key={id} className="bg-primary/10 text-primary text-sm font-bold px-2.5 py-1 rounded-md animate-in fade-in zoom-in duration-200">
-                                            {id}
-                                        </span>
-                                    ))
+                                    selectedSeatIds.map(id => {
+                                        // V7.13: seatId 파싱 (형식: "1층-B-5-2")
+                                        const parts = id.split('-');
+                                        const floor = parts[0] || '';
+                                        const sectionId = parts[1] || '';
+                                        const row = parts[2] || '';
+                                        const localNum = parseInt(parts[3] || '0');
+
+                                        // V7.13: 연속 번호 계산 (theater-template.tsx와 동일 로직)
+                                        const calculateGlobalSeatNumber = () => {
+                                            if (row === 'OP') return localNum; // OP열은 독립적
+
+                                            const sectionOrder = ['A', 'B', 'C', 'D', 'E', 'F'];
+                                            const currentSectionIndex = sectionOrder.indexOf(sectionId);
+                                            const floorSections = venueData?.sections.filter((s: any) => s.floor === floor) || [];
+
+                                            let offset = 0;
+                                            for (let i = 0; i < currentSectionIndex; i++) {
+                                                const section = floorSections.find((s: any) => s.sectionId === sectionOrder[i]);
+                                                if (section) {
+                                                    const targetRow = section.rows.find((r: any) => r.rowId === row);
+                                                    if (targetRow && targetRow.seats) {
+                                                        offset += targetRow.seats.length;
+                                                    }
+                                                }
+                                            }
+                                            return offset + localNum;
+                                        };
+
+                                        const displayNum = calculateGlobalSeatNumber();
+
+                                        // 좌석 정보 및 등급 색상 찾기
+                                        const seatData = getSelectedSeatsData().find(s => s.seatId === id);
+                                        const gradeInfo = venueData?.grades.find((g: any) => g.grade === seatData?.grade);
+                                        const gradeColor = gradeInfo?.color || '#FF6B35';
+                                        const gradeLabel = seatData?.grade || '';
+
+                                        // V7.13: "N층 N열 N번 (등급석)" 형식 - 연속 번호 사용
+                                        const displayLabel = `${floor} ${row}열 ${displayNum}번 (${gradeLabel}석)`;
+
+                                        return (
+                                            <span
+                                                key={id}
+                                                className="text-sm font-bold px-2.5 py-1 rounded-md animate-in fade-in zoom-in duration-200 whitespace-nowrap"
+                                                style={{
+                                                    borderWidth: '2px',
+                                                    borderStyle: 'solid',
+                                                    borderColor: gradeColor,
+                                                    backgroundColor: `${gradeColor}15`,
+                                                    color: gradeColor
+                                                }}
+                                            >
+                                                {displayLabel}
+                                            </span>
+                                        );
+                                    })
                                 ) : (
                                     <span className="text-sm font-medium text-gray-400 mt-1 ml-1">좌석을 선택해주세요</span>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-8">
+                        {/* V7.13: 결제금액/버튼 영역 - flex-shrink-0으로 고정 */}
+                        <div className="flex items-center gap-8 flex-shrink-0">
+
                             <div className="text-right">
                                 <p className="text-sm text-muted-foreground mb-1">총 결제 금액</p>
                                 <p className="font-bold text-2xl tracking-tight text-gray-900">

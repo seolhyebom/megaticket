@@ -20,6 +20,7 @@ export interface Performance {
     dates: string[];
     times: string[];
     grades: SeatGrade[];
+    hasOPSeats?: boolean; // V7.10 Added
     description: string;
     duration: string; // clean name
     runtime: string; // compatibility

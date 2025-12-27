@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "@/components/ui/separator"
 import { Calendar, Clock, MapPin, Ticket } from "lucide-react"
 import { apiClient } from "@/lib/api-client"
+import { cn } from "@/lib/utils"
 
 function ReservationConfirmContent() {
     const router = useRouter()
@@ -144,14 +145,41 @@ function ReservationConfirmContent() {
 
     return (
         <div className="container mx-auto max-w-xl py-4 px-4 h-full flex flex-col justify-center items-center">
+            <style jsx>{`
+                @keyframes spin-slow {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                @keyframes color-pulse {
+                    0%, 100% { background-color: #ffffff; color: #ea580c; }
+                    50% { background-color: #fff1f2; color: #e11d48; }
+                }
+                @keyframes scale-pulse {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.1); }
+                }
+            `}</style>
             <Card className="shadow-lg w-full overflow-hidden border-none ring-1 ring-gray-200 p-0 relative">
-                <div className={`absolute top-0 left-0 right-0 h-1 z-10 transition-all duration-1000 ${timeLeft < 10 ? 'bg-red-500' : 'bg-primary'}`} style={{ width: `${(timeLeft / 60) * 100}%` }} />
-
                 <CardHeader className="bg-primary/10 border-b py-4 m-0 relative">
-                    <div className="absolute top-3 right-4 font-mono font-bold text-lg bg-white/50 px-3 py-1 rounded-full backdrop-blur-sm border border-white/20 shadow-sm">
-                        <span className={timeLeft < 10 ? 'text-red-600 animate-pulse' : 'text-primary'}>
-                            {formatTime(timeLeft)}
-                        </span>
+                    <div className="absolute top-3 right-4 z-20">
+                        {/* Border Wrapper */}
+                        <div className={cn(
+                            "relative rounded-full p-[2px] overflow-hidden shadow-sm transition-transform duration-500",
+                            timeLeft < 10 && "animate-[scale-pulse_2s_ease-in-out_infinite]"
+                        )}>
+                            {/* Rotating Gradient Background (Large enough to cover pill rotation) */}
+                            <div className="absolute top-[-100%] left-[-100%] w-[300%] h-[300%] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#fda4af_25%,#fb923c_50%,#fcd34d_75%,transparent_100%)] animate-[spin-slow_3s_linear_infinite]" />
+
+                            {/* Inner Content Pill */}
+                            <div className={cn(
+                                "relative rounded-full bg-white px-3 py-1.5 flex items-center justify-center gap-1.5 font-mono font-bold text-lg transition-colors duration-500",
+                                timeLeft < 10 && "animate-[color-pulse_4s_ease-in-out_infinite]",
+                                timeLeft >= 10 && "text-orange-600"
+                            )}>
+                                <Clock className="w-4 h-4" />
+                                <span>{formatTime(timeLeft)}</span>
+                            </div>
+                        </div>
                     </div>
 
                     <CardTitle className="text-lg text-primary text-center pt-1">{session.performanceTitle}</CardTitle>
@@ -182,17 +210,31 @@ function ReservationConfirmContent() {
                         <h3 className="font-semibold mb-2 flex items-center gap-2 text-sm">
                             <Ticket className="w-3.5 h-3.5 text-primary" /> 선택 좌석 ({session.seats.length}매)
                         </h3>
-                        <div className="bg-gray-50 p-3 rounded-xl space-y-1.5 border border-gray-100 max-h-[200px] overflow-y-auto custom-scrollbar">
-                            {session.seats.map(seat => (
-                                <div key={seat.seatId} className="flex justify-between items-center text-sm p-1 hover:bg-white rounded transition-colors">
-                                    <span className="font-medium text-gray-600">{seat.grade}석 {seat.rowId}열 {seat.seatNumber}번</span>
-                                    <span className="text-gray-900 font-bold tracking-tight">
-                                        {((seat as any).price > 0
-                                            ? (seat as any).price.toLocaleString()
-                                            : "가격 정보 없음")}원
-                                    </span>
-                                </div>
-                            ))}
+                        {/* V7.13: 리스트 간격 조절 (space-y-1.5 -> space-y-0.5, p-3 -> p-2) */}
+                        <div className="bg-gray-50 p-2 rounded-xl space-y-0.5 border border-gray-100 max-h-[200px] overflow-y-auto custom-scrollbar">
+                            {session.seats.map(seat => {
+                                // V7.13: seatId에서 상세 정보 파싱 (형식: 1층-B-OP-14)
+                                const parts = seat.seatId.split('-');
+                                let displayText = `${seat.grade}석 ${seat.rowId || '?'}열 ${seat.seatNumber}번`;
+                                if (parts.length === 4) {
+                                    const [floor, section, row, num] = parts;
+                                    displayText = `${floor} ${section}구역 ${row}열 ${num}번 (${seat.grade}석)`;
+                                }
+                                const gradeColor = (seat as any).color || '#333333';
+                                return (
+                                    // V7.13: 아이템 간격 조절 (p-2 -> py-0.5 px-2)
+                                    <div key={seat.seatId} className="flex justify-between items-center text-sm py-0.5 px-2 hover:bg-slate-50 rounded transition-colors border border-transparent hover:border-gray-100">
+                                        <span className="font-bold shrink-0" style={{ color: gradeColor }}>
+                                            {displayText}
+                                        </span>
+                                        <span className="text-gray-900 font-bold tracking-tight ml-2">
+                                            {((seat as any).price > 0
+                                                ? (seat as any).price.toLocaleString()
+                                                : "가격 정보 없음")}원
+                                        </span>
+                                    </div>
+                                );
+                            })}
                             <Separator className="my-2 opacity-50" />
                             <div className="flex justify-between items-center text-lg font-bold px-1">
                                 <span>총 결제 금액</span>
@@ -214,7 +256,7 @@ function ReservationConfirmContent() {
                     </Button>
                 </CardFooter>
             </Card>
-        </div>
+        </div >
     )
 }
 

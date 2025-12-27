@@ -4,20 +4,26 @@ import { Grade } from "@mega-ticket/shared-types"
 
 interface SeatLegendProps {
     grades: Grade[];
+    hasOPSeats?: boolean; // V7.10 Added
 }
 
-export function SeatLegend({ grades }: SeatLegendProps) {
+export function SeatLegend({ grades, hasOPSeats = true }: SeatLegendProps) {
+    // Filter out OP grade if hasOPSeats is false
+    const displayGrades = hasOPSeats
+        ? grades
+        : grades.filter(g => g.grade !== 'OP');
+
     return (
         <div className="w-full border-t bg-white flex justify-center border-b">
             <div className="w-full max-w-full flex flex-nowrap items-center justify-center gap-6 p-4 px-8 text-sm whitespace-nowrap overflow-x-auto custom-scrollbar">
                 {/* Grades */}
-                {grades.map((grade) => (
+                {displayGrades.map((grade) => (
                     <div key={grade.grade} className="flex items-center gap-2">
                         <div
                             className="w-4 h-4 rounded-sm border-2"
                             style={{ borderColor: grade.color }}
                         />
-                        <span>{grade.grade}석 ({grade.price.toLocaleString()}원)</span>
+                        <span>{grade.grade.endsWith('석') ? grade.grade : grade.grade + '석'} {grade.price > 0 && `(${grade.price.toLocaleString()}원)`}</span>
                         <div className="h-4 w-px bg-gray-200 ml-4 hidden sm:block last:hidden" />
                     </div>
                 ))}

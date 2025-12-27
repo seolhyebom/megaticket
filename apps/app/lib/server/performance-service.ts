@@ -1,6 +1,42 @@
 // @ts-nocheck
-import { GetCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { dynamoDb, PERFORMANCES_TABLE, VENUES_TABLE } from "../dynamodb";
+import { GetCommand, ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { dynamoDb, PERFORMANCES_TABLE, VENUES_TABLE, SCHEDULES_TABLE } from "../dynamodb";
+
+interface CacheEntry<T> {
+    data: T;
+    expiresAt: number;
+}
+
+class SimpleCache {
+    private cache = new Map<string, CacheEntry<any>>();
+    private defaultTTL = parseInt(process.env.CACHE_TTL_MS || '604800000'); // 7일
+
+    get<T>(key: string): T | null {
+        const entry = this.cache.get(key);
+
+        if (!entry) {
+            return null;
+        }
+        if (Date.now() > entry.expiresAt) {
+            this.cache.delete(key);
+            return null;
+        }
+        return entry.data as T;
+    }
+
+    set<T>(key: string, data: T, ttl?: number): void {
+        this.cache.set(key, {
+            data,
+            expiresAt: Date.now() + (ttl || this.defaultTTL)
+        });
+    }
+
+    clear(): void {
+        this.cache.clear();
+    }
+}
+
+export const performanceCache = new SimpleCache();
 
 export interface TimeSlot {
     time: string
@@ -17,20 +53,25 @@ export interface Schedule {
 
 export interface Performance {
     id: string;
-    performanceId?: string; // DynamoDB use this as PK
+    performanceId?: string;
     title: string;
-    venue?: string; // Legacy
-    venueId?: string; // New UI uses this
+    venue?: string;
+    venueId?: string;
     description: string;
-    dates: string[]; // YYYY-MM-DD
-    times: string[]; // HH:mm
-    posterUrl?: string; // Legacy
-    poster?: string; // New UI uses this
-    dateRange?: string; // New UI uses this
+    dates: string[];
+    times: string[];
+    posterUrl?: string;
+    poster?: string;
+    dateRange?: string;
     runtime?: string;
     ageLimit?: string;
     price?: string;
     schedules?: Schedule[];
+    seatGrades?: { grade: string; price?: number; color?: string; description?: string }[];
+    seatColors?: Record<string, string>;
+    sections?: any[];
+    gradeMapping?: Record<string, string[]>;
+    cast?: string[];  // [V7.11] 캐스팅 정보
 }
 
 export interface SeatInfo {
@@ -39,149 +80,347 @@ export interface SeatInfo {
 }
 
 /**
- * 단일 공연 정보 조회 (DynamoDB Only)
+ * 단일 공연 정보 조회
  */
 export async function getPerformance(id: string): Promise<Performance | null> {
+    const cacheKey = `v84:perf:${id}`;
+    const cached = performanceCache.get<Performance>(cacheKey);
+    if (cached) return cached;
+
     try {
         const result = await dynamoDb.send(new GetCommand({
             TableName: PERFORMANCES_TABLE,
             Key: { performanceId: id }
         }));
 
-        if (!result.Item) {
-            console.error(`[PerformanceService] Performance not found: ${id}`);
-            return null;
-        }
+        if (!result.Item) return null;
 
         const perf = result.Item as Performance;
-        let venueName = perf.venue || perf.venueId;
+        const venueName = perf.venue || perf.venueId || '알 수 없는 공연장';
+        let sections = perf.sections || [];
+        let seatGrades = perf.seatGrades || [];
 
-        // Fetch venue name from VENUES_TABLE
-        try {
-            const venueResult = await dynamoDb.send(new GetCommand({
-                TableName: VENUES_TABLE,
-                Key: { venueId: perf.venueId || 'charlotte-theater' }
-            }));
-            if (venueResult.Item) {
-                venueName = venueResult.Item.name;
-            }
-        } catch (vError) {
-            console.warn(`[PerformanceService] Failed to fetch venue name for ${perf.venueId}`);
+        // [V7.12] Canonical grade helper (e.g., "VIP석" -> "VIP")
+        const getBaseGrade = (g: string) => {
+            if (!g) return g;
+            return String(g).trim().replace(/석+$/, '');
+        };
+
+        // [V7.13] Parse price string: "VIP/OP석 170,000원 / R석 140,000원"
+        const priceMap: Record<string, number> = {};
+        if (perf.price && typeof perf.price === 'string') {
+            const parts = perf.price.split(' / ');
+            parts.forEach(part => {
+                const match = part.match(/^(.+?)\s+([\d,]+)/);
+                if (match) {
+                    const rawGrade = match[1].trim();
+                    const priceVal = parseInt(match[2].replace(/,/g, ''), 10);
+
+                    if (rawGrade.includes('/')) {
+                        rawGrade.split('/').forEach(sub => {
+                            const base = getBaseGrade(sub);
+                            priceMap[base] = priceVal;
+                            priceMap[base + '석'] = priceVal;
+                        });
+                    } else {
+                        const base = getBaseGrade(rawGrade);
+                        priceMap[base] = priceVal;
+                        priceMap[base + '석'] = priceVal;
+                    }
+                }
+            });
         }
 
-        // Temporary Override for Phantom dates as requested
-        if (id.includes('phantom')) {
-            perf.dates = ["2026-02-20", "2026-05-15"];
-            perf.dateRange = "2026.02.20 ~ 2026.05-15";
+        // 1. Normalize seatGrades (Use BASE names like "VIP")
+        seatGrades = seatGrades.map((g: any) => {
+            const baseName = getBaseGrade(g.grade);
+            return {
+                ...g,
+                grade: baseName,
+                price: g.price || priceMap[baseName] || 0
+            };
+        });
 
-            // Generate schedules for the new date range (Feb 2026 - May 2026)
-            // This is needed for the booking calendar to interactable
-            const startDate = new Date("2026-02-20");
-            const endDate = new Date("2026-05-15");
-            const schedules: Schedule[] = [];
+        // 2. Normalize seatColors
+        const seatColors: Record<string, string> = {};
+        if (perf.seatColors) {
+            Object.entries(perf.seatColors).forEach(([k, v]) => {
+                seatColors[getBaseGrade(k)] = v as string;
+            });
+        }
 
-            // Loop day by day
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                // Formatting YYYY-MM-DD
-                const dateStr = d.toISOString().split('T')[0];
-                const dayNum = d.getDay(); // 0=Sun, 1=Mon...
-                const dayMap = ['일', '월', '화', '수', '목', '금', '토'];
+        // [V7.14] V7.8 Dynamic Merge Engine: Venue Structure + Grade Mapping
+        let mergedSections = [];
 
-                // Skip Mondays (usually theater off-day, assumption)
-                if (dayNum === 1) continue;
+        if (perf.venueId) {
+            const venue = await getVenue(perf.venueId);
+            if (venue && venue.sections) {
+                const mapping = perf.gradeMapping || {};
 
-                // Basic schedule pattern
-                // Weekdays (Tue-Fri): 19:30
-                // Weekends (Sat-Sun): 14:00, 19:00
-                // This is a mock pattern for the Phantom performance
-                const times: TimeSlot[] = [];
+                // Reverse mapping for O(1) row lookup: RowID -> Grade
+                const rowToGrade: Record<string, string> = {};
+                Object.entries(mapping).forEach(([grade, rowIds]) => {
+                    if (Array.isArray(rowIds)) {
+                        rowIds.forEach(rid => {
+                            rowToGrade[rid] = grade;
+                        });
+                    }
+                });
 
-                if (dayNum === 0 || dayNum === 6) { // Sat, Sun
-                    times.push({ time: "14:00", availableSeats: 120, status: "available" });
-                    times.push({ time: "19:00", availableSeats: 120, status: "available" });
-                } else { // Tue-Fri
-                    times.push({ time: "19:30", availableSeats: 120, status: "available" });
-                }
+                mergedSections = venue.sections.map((section: any) => {
+                    const sid = section.sectionId;
+                    return {
+                        ...section,
+                        rows: (section.rows || []).map((row: any) => {
+                            const rid = row.rowId;
+                            const rowKey = `${sid}-${rid}`;
 
-                schedules.push({
-                    date: dateStr,
-                    dayOfWeek: dayMap[dayNum],
-                    times: times
+                            // 1. Determine Row Grade from Mapping
+                            let rowGrade = rowToGrade[rowKey] || row.grade || 'Standard';
+
+                            // 2. Special Logic: OP/VIP Split if needed
+                            if (rowGrade === 'OP/VIP') {
+                                rowGrade = rid === 'OP' ? 'OP' : 'VIP';
+                            }
+
+                            // 3. Inject Grade into Row and all its Seats
+                            return {
+                                ...row,
+                                grade: rowGrade,
+                                seats: (row.seats || []).map((seat: any) => ({
+                                    ...seat,
+                                    grade: rowGrade // Standardize seat grade with row grade
+                                }))
+                            };
+                        })
+                    };
                 });
             }
-            perf.schedules = schedules;
         }
 
-        // DynamoDB uses performanceId as PK, but frontend might expect id
-        return {
+        // Fallback for legacy data or if venue not found
+        if (mergedSections.length === 0 && sections.length > 0) {
+            mergedSections = sections.map((section: any) => ({
+                ...section,
+                rows: (section.rows || []).map((row: any) => {
+                    const rawRowGrade = row.grade || (row.seats && row.seats[0]?.grade);
+                    const rowBaseGrade = getBaseGrade(rawRowGrade);
+                    let finalGrade = rowBaseGrade;
+                    if (rowBaseGrade === 'OP/VIP') {
+                        finalGrade = row.rowId === 'OP' ? 'OP' : 'VIP';
+                    }
+                    return {
+                        ...row,
+                        grade: finalGrade,
+                        seats: (row.seats || []).map((seat: any) => ({
+                            ...seat,
+                            grade: getBaseGrade(seat.grade)
+                        }))
+                    };
+                })
+            }));
+        }
+
+        const schedules = await getPerformanceSchedules(id);
+
+        const data = {
             ...perf,
             id: perf.performanceId || perf.id,
-            venue: venueName, // Ensure human readable name
-            posterUrl: perf.posterUrl || perf.poster, // Support both fields
-            dates: perf.dates || [], // Ensure dates is an array
-            schedules: perf.schedules || []
+            venue: venueName,
+            posterUrl: perf.posterUrl || perf.poster,
+            dates: perf.dates || [],
+            schedules: schedules,
+            sections: mergedSections,
+            seatGrades: seatGrades,
+            seatColors: seatColors,
+            cast: (perf as any).cast || []  // [V7.11] 캐스팅 정보 포함
         };
+
+        performanceCache.set(cacheKey, data);
+        return data;
     } catch (error) {
-        console.error(`[PerformanceService] Error fetching performance:`, error);
-        throw error; // V6.7 목표: 명확한 에러 throw
+        console.error(`[PerformanceService] Error fetching performance ${id}:`, error);
+        throw error;
     }
 }
 
 /**
- * 전체 공연 목록 조회 (DynamoDB Only)
+ * 전체 공연 목록 조회
  */
 export async function getAllPerformances(): Promise<Performance[]> {
+    const cacheKey = `v84:perfs:all`;
+    const cached = performanceCache.get<Performance[]>(cacheKey);
+    if (cached) return cached;
+
     try {
         const result = await dynamoDb.send(new ScanCommand({
             TableName: PERFORMANCES_TABLE
         }));
 
         const items = (result.Items || []) as Performance[];
-        return items.map(item => ({
+        const data = items.map(item => ({
             ...item,
             id: item.performanceId || item.id
         }));
+
+        performanceCache.set(cacheKey, data);
+        return data;
     } catch (error) {
         console.error(`[PerformanceService] Error fetching all performances:`, error);
         return [];
     }
 }
 
-export function getSeatInfo(seatId: string): SeatInfo {
-    // 새 좌석 ID 형식: "A-1-5" (구역-열-번호)
+/**
+ * 공연 스케줄 목록 조회
+ */
+export async function getPerformanceSchedules(performanceId: string): Promise<Schedule[]> {
+    const cacheKey = `v81:schedules:${performanceId}`;
+    const cached = performanceCache.get<Schedule[]>(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const result = await dynamoDb.send(new QueryCommand({
+            TableName: SCHEDULES_TABLE,
+            IndexName: "performanceId-datetime-index",
+            KeyConditionExpression: "performanceId = :pid",
+            ExpressionAttributeValues: { ":pid": performanceId }
+        }));
+
+        if (!result.Items || result.Items.length === 0) return [];
+
+        const grouped: Record<string, Schedule> = {};
+        result.Items.forEach((item: any) => {
+            const date = item.date;
+            if (!grouped[date]) {
+                grouped[date] = {
+                    date: date,
+                    dayOfWeek: item.dayOfWeek,
+                    times: []
+                };
+            }
+            grouped[date].times.push({
+                time: item.time,
+                availableSeats: item.availableSeats,
+                status: item.availableSeats > 0 ? 'available' : 'soldout',
+                cast: item.casting
+            });
+        });
+
+        const data = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
+        performanceCache.set(cacheKey, data);
+        return data;
+    } catch (error) {
+        console.error(`[PerformanceService] Error fetching schedules for ${performanceId}:`, error);
+        return [];
+    }
+}
+
+/**
+ * 단일 스케줄 조회
+ */
+export async function getSchedule(scheduleId: string): Promise<Schedule | null> {
+    const cacheKey = `v81:schedule:${scheduleId}`;
+    const cached = performanceCache.get<Schedule>(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const result = await dynamoDb.send(new GetCommand({
+            TableName: SCHEDULES_TABLE,
+            Key: { scheduleId: scheduleId }
+        }));
+
+        if (!result.Item) return null;
+
+        const item = result.Item;
+        const data = {
+            date: item.date,
+            dayOfWeek: item.dayOfWeek,
+            times: [{
+                time: item.time,
+                availableSeats: item.availableSeats,
+                status: item.availableSeats > 0 ? 'available' : 'soldout',
+                cast: item.casting
+            }]
+        };
+
+        performanceCache.set(cacheKey, data);
+        return data;
+    } catch (error) {
+        console.error(`[PerformanceService] Error fetching schedule ${scheduleId}:`, error);
+        return null;
+    }
+}
+
+export function getSeatInfo(seatId: string, sections: any[] = []): SeatInfo {
     const parts = seatId.split('-');
+    let sectionId = '', rowId = '';
 
-    // 3 parts: "A-1-5" (Section-Row-Number)
-    if (parts.length === 3) {
-        const [sectionId, rowId, numberStr] = parts;
-        const row = parseInt(rowId, 10);
+    if (parts.length === 3) [sectionId, rowId] = parts;
+    else if (parts.length === 4) [, sectionId, rowId] = parts;
+    else return { grade: 'Standard', price: 0 };
 
-        // 1층 (OP열 - OP석)
-        if (sectionId === 'OP') {
-            return { grade: 'OP', price: 170000 };
-        }
-
-        // 1층 (A, B, C 구역)
-        if (['A', 'B', 'C'].includes(sectionId)) {
-            if (row <= 10) return { grade: 'VIP', price: 170000 };
-            if (row <= 14) return { grade: 'R', price: 140000 };
-            if (row <= 17) return { grade: 'S', price: 110000 };
-            return { grade: 'A', price: 80000 };
-        }
-
-        // 2층 (D, E, F 구역)
-        if (['D', 'E', 'F'].includes(sectionId)) {
-            if (row <= 5) return { grade: 'R', price: 140000 };
-            if (row <= 8) return { grade: 'S', price: 110000 };
-            return { grade: 'A', price: 80000 };
+    if (sections && sections.length > 0) {
+        const matchedSection = sections.find(s => (s.sectionId || s.id) === sectionId);
+        if (matchedSection) {
+            if (Array.isArray(matchedSection.rows) && matchedSection.rows.length > 0 && typeof matchedSection.rows[0] === 'object') {
+                const matchedRow = matchedSection.rows.find((r: any) => String(r.rowId) === String(rowId));
+                if (matchedRow) return { grade: matchedRow.grade || 'Standard', price: 0 };
+            }
+            if (Array.isArray(matchedSection.rows) && matchedSection.rows.length === 2 && typeof matchedSection.rows[0] === 'number') {
+                const rowNum = parseInt(rowId, 10);
+                if (!isNaN(rowNum)) {
+                    const [start, end] = matchedSection.rows;
+                    if (rowNum >= start && rowNum <= end) return { grade: matchedSection.grade, price: 0 };
+                }
+            }
+            if ((!matchedSection.rows || matchedSection.rows.length === 0) && matchedSection.grade) {
+                return { grade: matchedSection.grade, price: 0 };
+            }
         }
     }
+    return { grade: 'Standard', price: 0 };
+}
 
-    // 4 parts: "1F-A-1-5" (Legacy or explicit format)
-    if (parts.length === 4) {
-        return { grade: 'R', price: 140000 };
+export async function getSeatGrades(performanceId: string): Promise<{ grade: string; price: number; color: string; description: string }[]> {
+    const performance = await getPerformance(performanceId);
+    if (performance?.seatGrades && performance.seatGrades.length > 0) {
+        return performance.seatGrades.map(g => ({
+            grade: g.grade,
+            price: g.price || 0,
+            color: g.color || '#808080',
+            description: g.description || ''
+        }));
     }
+    return [];
+}
 
-    // Default fallback
-    return { grade: 'Standard', price: 80000 };
+export async function isValidGrade(performanceId: string, grade: string): Promise<boolean> {
+    const seatGrades = await getSeatGrades(performanceId);
+    return seatGrades.some(g => g.grade === grade);
+}
+
+export async function getGradePrice(performanceId: string, grade: string): Promise<number | null> {
+    const seatGrades = await getSeatGrades(performanceId);
+    const found = seatGrades.find(g => g.grade === grade);
+    return found?.price || null;
+}
+
+export async function getVenue(venueId: string) {
+    const cacheKey = `v81:venue:${venueId}`;
+    const cached = performanceCache.get<any>(cacheKey);
+    if (cached) return cached;
+
+    try {
+        const result = await dynamoDb.send(new GetCommand({
+            TableName: VENUES_TABLE,
+            Key: { venueId }
+        }));
+        const data = result.Item || null;
+        if (data) performanceCache.set(cacheKey, data);
+        return data;
+    } catch (e) {
+        console.error(`[PerformanceService] Error fetching venue ${venueId}:`, e);
+        return null;
+    }
 }

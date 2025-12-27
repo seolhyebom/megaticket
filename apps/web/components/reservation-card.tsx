@@ -4,6 +4,8 @@ import Image from "next/image"
 import React from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useSearchParams } from "next/navigation"
 import { CalendarDays, MapPin, Ticket, Clock, CreditCard } from "lucide-react"
 
 export interface ReservationSeat {
@@ -18,6 +20,7 @@ export interface Reservation {
     id: string // Server uses 'id'
     reservationId?: string // Keeping for compat, but should prefer id
     userId: string
+    performanceId: string  // Added for navigation
     performanceTitle: string
     posterUrl?: string
     date: string
@@ -32,11 +35,19 @@ export interface Reservation {
 interface ReservationCardProps {
     reservation: Reservation
     onCancel?: (reservationId: string) => Promise<void>
+    onDelete?: (reservationId: string) => Promise<void>  // V7.14: 취소내역 삭제
 }
 
-export function ReservationCard({ reservation, onCancel }: ReservationCardProps) {
+
+export function ReservationCard({ reservation, onCancel, onDelete }: ReservationCardProps) {
     const isCancelled = reservation.status === "cancelled"
     const [isCancelling, setIsCancelling] = React.useState(false)
+    const [isDeleting, setIsDeleting] = React.useState(false)  // V7.14
+
+    // [Navigation] Get current region to preserve it
+    const searchParams = useSearchParams()
+    const region = searchParams.get("region") || "ap-northeast-2"
+    const detailsUrl = `/performances/${reservation.performanceId}?region=${region}`
 
     const handleCancel = async () => {
         if (!onCancel) return
@@ -54,6 +65,24 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
             }
         }
     }
+
+    // V7.14: 취소내역 완전 삭제
+    const handleDelete = async () => {
+        if (!onDelete) return
+        if (confirm("취소 내역을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) {
+            setIsDeleting(true)
+            try {
+                const targetId = reservation.id || reservation.reservationId || ""
+                await onDelete(targetId)
+            } catch (error) {
+                console.error("Delete failed", error)
+                alert("삭제에 실패했습니다.")
+            } finally {
+                setIsDeleting(false)
+            }
+        }
+    }
+
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow duration-200">
@@ -172,9 +201,11 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
 
                         {!isCancelled && (
                             <div className="flex gap-2 w-full sm:w-auto">
-                                <Button variant="outline" className="flex-1 sm:flex-none text-gray-500" size="sm">
-                                    상세보기
-                                </Button>
+                                <Link href={detailsUrl} className="flex-1 sm:flex-none">
+                                    <Button variant="outline" className="w-full text-gray-500" size="sm">
+                                        상세보기
+                                    </Button>
+                                </Link>
                                 <Button
                                     variant="outline"
                                     className="flex-1 sm:flex-none text-red-500 hover:text-red-600 border-red-200 hover:bg-red-50"
@@ -184,6 +215,24 @@ export function ReservationCard({ reservation, onCancel }: ReservationCardProps)
                                 >
                                     {isCancelling ? "취소 중..." : "예약 취소"}
                                 </Button>
+                            </div>
+                        )}
+
+                        {/* V7.14: 취소된 예약에 대한 삭제 버튼 */}
+                        {isCancelled && onDelete && (
+                            <div className="flex flex-col gap-2 w-full sm:w-auto items-end">
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        className="flex-1 sm:flex-none text-gray-500 hover:text-gray-700 border-gray-300 hover:bg-gray-50"
+                                        size="sm"
+                                        onClick={handleDelete}
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? "삭제 중..." : "취소내역 삭제"}
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-gray-400">※ 취소 내역은 7일 후 자동 삭제됩니다.</p>
                             </div>
                         )}
                     </div>

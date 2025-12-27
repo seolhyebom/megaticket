@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`[API POST /holdings] Request:`, { performanceId, seatCount: seats.length, userId });
+        console.log(`[REALTIME] [HOLDING] [API POST /holdings] Request:`, { performanceId, seatCount: seats.length, userId });
 
         const result = await createHolding(performanceId, seats as Seat[], userId, date, time);
 

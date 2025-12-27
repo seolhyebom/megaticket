@@ -16,5 +16,8 @@ export async function GET(
         );
     }
 
+    // Debug Log
+    console.log(`[API Route] Sending performance ${id}. Sections length: ${performance.sections?.length}`);
+
     return NextResponse.json(performance);
 }

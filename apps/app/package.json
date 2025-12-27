@@ -4,22 +4,24 @@
     "private": true,
     "scripts": {
         "dev": "next dev -p 3001",
+        "clean": "if exist .next rmdir /s /q .next",
         "build": "next build",
         "start": "next start -p 3001"
     },
     "dependencies": {
+        "@aws-sdk/client-bedrock-runtime": "^3.953.0",
+        "@aws-sdk/client-cloudwatch": "^3.953.0",
+        "@aws-sdk/client-dynamodb": "^3.958.0",
+        "@aws-sdk/lib-dynamodb": "^3.958.0",
+        "@mega-ticket/shared-types": "*",
         "next": "^15.5.9",
         "react": "^19.2.3",
-        "react-dom": "^19.2.3",
-        "@aws-sdk/client-dynamodb": "^3.953.0",
-        "@aws-sdk/lib-dynamodb": "^3.953.0",
-        "@aws-sdk/client-bedrock-runtime": "^3.953.0",
-        "@mega-ticket/shared-types": "*"
+        "react-dom": "^19.2.3"
     },
     "devDependencies": {
-        "typescript": "^5",
         "@types/node": "^20",
         "@types/react": "^19",
-        "@types/react-dom": "^19"
+        "@types/react-dom": "^19",
+        "typescript": "^5"
     }
 }

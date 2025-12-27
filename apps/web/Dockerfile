@@ -1,16 +1,18 @@
-FROM node:20-alpine AS base
+FROM node:20 AS base
 
 # Install dependencies only when needed
 FROM base AS builder
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+# RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy entire monorepo content
 COPY . .
 
+# Remove nested package-lock.json to prevent native module conflicts
+RUN rm -f apps/web/package-lock.json apps/app/package-lock.json
+
 # Install dependencies
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Build the project and its dependencies
 RUN npx turbo run build --filter=web
@@ -21,8 +23,8 @@ WORKDIR /app
 
 ENV NODE_ENV production
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN groupadd -g 1001 nodejs
+RUN useradd -u 1001 -g nodejs -s /bin/bash -m nextjs
 
 # Copy standalone build
 # Standard output for monorepo: apps/web/.next/standalone -> /app/

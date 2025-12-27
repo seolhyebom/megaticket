@@ -8,8 +8,11 @@ WORKDIR /app
 # Copy entire monorepo content
 COPY . .
 
-# Install dependencies
-RUN npm install
+# Remove nested package-lock.json to prevent native module conflicts
+RUN rm -f apps/web/package-lock.json apps/app/package-lock.json
+
+# Install dependencies (force rebuild native modules for Linux)
+RUN npm install --legacy-peer-deps
 
 # Build the project and its dependencies
 RUN npx turbo run build --filter=app

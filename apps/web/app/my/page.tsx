@@ -64,6 +64,28 @@ export default function MyPage() {
         }
     }
 
+    // V7.14: 취소내역 완전 삭제
+    const handleDeleteReservation = async (reservationId: string) => {
+        try {
+            const res = await fetch(`/api/reservations?reservationId=${reservationId}&method=PURGE`, {
+                method: "DELETE"
+            })
+            if (res.ok) {
+                // Refresh list
+                const res = await fetch(`/api/reservations?userId=${user!.id}`)
+                if (res.ok) {
+                    const data = await res.json()
+                    setReservations(data)
+                }
+            } else {
+                alert("삭제 처리에 실패했습니다.")
+            }
+        } catch (e) {
+            console.error("Delete error", e)
+            alert("오류가 발생했습니다.")
+        }
+    }
+
     if (isLoading || (user && fetching)) {
         return (
             <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
@@ -93,6 +115,7 @@ export default function MyPage() {
                             key={reservation.id || reservation.reservationId}
                             reservation={reservation}
                             onCancel={handleCancelReservation}
+                            onDelete={handleDeleteReservation}
                         />
                     ))}
                 </div>

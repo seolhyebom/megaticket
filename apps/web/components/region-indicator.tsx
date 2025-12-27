@@ -25,13 +25,19 @@ export function RegionIndicator({ region }: { region?: string }) {
     // Visual indicator for DR/Failover regions
     const isMainRegion = region === 'ap-northeast-2'
 
+    const getRegionName = (r: string) => {
+        if (r === 'ap-northeast-2') return '(서울)';
+        if (r === 'ap-northeast-1') return '(도쿄)';
+        return '';
+    };
+
     // Always show region as requested
     // if (isMainRegion) return null;
 
     return (
         <div className="fixed bottom-4 right-4 z-[9999] bg-black/80 text-white px-3 py-1.5 rounded-full text-xs font-mono flex items-center gap-2 shadow-lg backdrop-blur-sm border border-white/10 pointer-events-none">
             <div className={`w-2 h-2 rounded-full ${isMainRegion ? 'bg-green-500' : 'bg-amber-500 animate-pulse'}`} />
-            Region: {region}{isMainRegion ? '(서울)' : ''}
+            Region: {region}{getRegionName(region)}
         </div>
     )
 }

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build:
@@ -36,6 +34,25 @@ services:
       - C:\Users\User\.aws:/home/nextjs/.aws:ro
     networks:
       - megaticket-net
+
+  # [V7.12] 스크립트 실행용 서비스 (DynamoDB 갱신 등)
+  db-scripts:
+    image: node:20-alpine
+    working_dir: /app
+    environment:
+      - AWS_REGION=ap-northeast-2
+      - AWS_SDK_LOAD_CONFIG=1
+      - AWS_CONFIG_FILE=/root/.aws/config
+      - AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials
+    volumes:
+      - ./apps/app/scripts:/scripts:ro
+      - C:\Users\User\.aws:/root/.aws:ro
+    profiles:
+      - scripts
+    networks:
+      - megaticket-net
+    entrypoint: [ "sh", "-c" ]
+    command: [ "cp -r /scripts/* /app/ && npm init -y && npm install @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb && node restore-venue-sections.mjs" ]
 
 networks:
   megaticket-net:

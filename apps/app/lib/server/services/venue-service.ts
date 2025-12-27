@@ -5,9 +5,11 @@ import { dynamoDb, VENUES_TABLE } from "@/lib/dynamodb";
 export interface VenueData {
     venueId: string;
     venueName: string;
-    // ... add other fields as needed based on usage
-    grades?: any[];
+    venueType: string;
+    totalSeats: number;
+    createdAt?: string;
     sections?: any[];
+    grades?: any[];
 }
 
 export async function getVenue(venueId: string): Promise<VenueData | null> {
@@ -20,7 +22,10 @@ export async function getVenue(venueId: string): Promise<VenueData | null> {
         );
 
         if (Item) {
-            return Item as VenueData;
+            return {
+                ...Item,
+                venueName: Item.venueName || Item.name || "Unknown Venue"
+            } as VenueData;
         }
 
         console.warn(`Venue ${venueId} not found in DynamoDB.`);
