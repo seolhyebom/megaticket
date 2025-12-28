@@ -15,6 +15,7 @@ function ReservationConfirmContent() {
     const searchParams = useSearchParams()
     const holdingId = searchParams.get('holdingId')
     const expiresAt = searchParams.get('expiresAt')
+    const remainingSecondsParam = searchParams.get('remainingSeconds')
 
     const [session, setSession] = useState<ReservationSession | null>(null)
     const [timeLeft, setTimeLeft] = useState(60) // Default fallback
@@ -57,17 +58,28 @@ function ReservationConfirmContent() {
         }
         setSession(data)
 
-        // Initialize timer based on server expiration time
+        // Initialize timer based on server's remainingSeconds (preferred) or expiresAt (fallback)
+        if (remainingSecondsParam) {
+            // 서버에서 전달받은 정확한 남은 시간 사용
+            const serverRemainingSeconds = parseInt(remainingSecondsParam, 10)
+            if (!isNaN(serverRemainingSeconds) && serverRemainingSeconds > 0) {
+                setTimeLeft(serverRemainingSeconds)
+                return
+            }
+        }
+
+        // Fallback: expiresAt 기반 계산 (서버-클라이언트 시간 차이 있을 수 있음)
         if (expiresAt) {
             const expireDate = new Date(expiresAt)
             const now = new Date()
             const diffSeconds = Math.floor((expireDate.getTime() - now.getTime()) / 1000)
 
             if (!isNaN(diffSeconds)) {
-                setTimeLeft(diffSeconds > 0 ? diffSeconds : 0)
+                // 최대 60초로 제한하여 시간 차이 문제 완화
+                setTimeLeft(Math.min(diffSeconds > 0 ? diffSeconds : 0, 60))
             }
         }
-    }, [router, holdingId, expiresAt])
+    }, [router, holdingId, expiresAt, remainingSecondsParam])
 
     // 2. Timer Logic
     useEffect(() => {

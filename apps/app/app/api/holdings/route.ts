@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({
             success: true,
             holdingId: result.holdingId,
-            expiresAt: result.expiresAt
+            expiresAt: result.expiresAt,
+            remainingSeconds: result.remainingSeconds
         });
 
     } catch (e) {

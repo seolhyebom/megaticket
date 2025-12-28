@@ -100,7 +100,8 @@ function SeatsContent() {
             })
 
             const expiresAtParam = data.expiresAt ? `&expiresAt=${encodeURIComponent(data.expiresAt)}` : ''
-            router.push(`/reservation/confirm?holdingId=${data.holdingId}${expiresAtParam}`)
+            const remainingSecondsParam = data.remainingSeconds ? `&remainingSeconds=${data.remainingSeconds}` : ''
+            router.push(`/reservation/confirm?holdingId=${data.holdingId}${expiresAtParam}${remainingSecondsParam}`)
 
         } catch (e) {
             console.error(e)

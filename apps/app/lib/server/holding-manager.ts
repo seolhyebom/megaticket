@@ -69,13 +69,14 @@ export async function createHolding(
     userId: string,
     date: string,
     time: string
-): Promise<{ success: boolean; holdingId?: string; error?: string; expiresAt?: string; unavailableSeats?: string[] }> {
+): Promise<{ success: boolean; holdingId?: string; error?: string; expiresAt?: string; remainingSeconds?: number; unavailableSeats?: string[] }> {
 
     const pk = createPK(performanceId, date, time);
     const holdingId = randomUUID();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + 60 * 1000).toISOString(); // 60 seconds TTL for POC
-    const ttl = Math.floor(now.getTime() / 1000) + 60;
+    const HOLDING_TTL_SECONDS = 60; // 60 seconds TTL for POC
+    const expiresAt = new Date(now.getTime() + HOLDING_TTL_SECONDS * 1000).toISOString();
+    const ttl = Math.floor(now.getTime() / 1000) + HOLDING_TTL_SECONDS;
 
 
 
@@ -120,7 +121,7 @@ export async function createHolding(
             TransactItems: puts
         }));
 
-        return { success: true, holdingId, expiresAt };
+        return { success: true, holdingId, expiresAt, remainingSeconds: HOLDING_TTL_SECONDS };
     } catch (error: any) {
         if (error.name === 'TransactionCanceledException') {
             return { success: false, error: "이미 예약된 좌석이 포함되어 있습니다." };
