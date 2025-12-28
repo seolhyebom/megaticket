@@ -9,7 +9,7 @@ interface UseChatActionsProps {
 export function useChatActions({ sendMessage, onActionTriggered }: UseChatActionsProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const region = searchParams.get('region') || 'ap-northeast-2';
+    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2';
 
     const handleAction = (action: ActionButton) => {
         if (action.disabled) return;

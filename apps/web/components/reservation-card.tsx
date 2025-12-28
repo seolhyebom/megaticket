@@ -46,7 +46,7 @@ export function ReservationCard({ reservation, onCancel, onDelete }: Reservation
 
     // [Navigation] Get current region to preserve it
     const searchParams = useSearchParams()
-    const region = searchParams.get("region") || "ap-northeast-2"
+    const region = searchParams.get("region") || process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2"
     const detailsUrl = `/performances/${reservation.performanceId}?region=${region}`
 
     const handleCancel = async () => {

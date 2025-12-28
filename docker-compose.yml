@@ -22,7 +22,7 @@ services:
     env_file:
       - ./apps/app/env.example
     environment:
-      - AWS_REGION=ap-northeast-2
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
       - AWS_PROFILE=BedrockDevUser-hyebom
       - AWS_SDK_LOAD_CONFIG=1
       - AWS_CONFIG_FILE=/home/nextjs/.aws/config
@@ -40,7 +40,7 @@ services:
     image: node:20-alpine
     working_dir: /app
     environment:
-      - AWS_REGION=ap-northeast-2
+      - AWS_REGION=${AWS_REGION:-ap-northeast-2}
       - AWS_SDK_LOAD_CONFIG=1
       - AWS_CONFIG_FILE=/root/.aws/config
       - AWS_SHARED_CREDENTIALS_FILE=/root/.aws/credentials

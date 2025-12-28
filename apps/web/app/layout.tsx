@@ -27,7 +27,7 @@ export default function RootLayout({
           </main>
           <SiteFooter />
           <Suspense fallback={null}>
-            <RegionIndicator region={process.env.AWS_REGION || "ap-northeast-2"} />
+            <RegionIndicator region={process.env.AWS_REGION || process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2"} />
           </Suspense>
         </AuthProvider>
       </body>

@@ -23,7 +23,7 @@ export function RegionIndicator({ region }: { region?: string }) {
     if (!region) return null
 
     // Visual indicator for DR/Failover regions
-    const isMainRegion = region === 'ap-northeast-2'
+    const isMainRegion = region === (process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2')
 
     const getRegionName = (r: string) => {
         if (r === 'ap-northeast-2') return '(서울)';
