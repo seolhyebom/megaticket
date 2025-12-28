@@ -8,9 +8,9 @@ import os
 session = boto3.Session(region_name=os.environ.get('AWS_REGION', 'ap-northeast-2'))
 dynamodb = session.resource('dynamodb')
 
-PERFORMANCES_TABLE = os.environ.get("DYNAMODB_TABLE_PERFORMANCES", "KDT-Msp4-PLDR-performances")
-SCHEDULES_TABLE = os.environ.get("DYNAMODB_TABLE_SCHEDULES", "KDT-Msp4-PLDR-schedules")
-VENUES_TABLE = os.environ.get("DYNAMODB_TABLE_VENUES", "KDT-Msp4-PLDR-venues")
+PERFORMANCES_TABLE = os.environ.get("DYNAMODB_PERFORMANCES_TABLE", "KDT-Msp4-PLDR-performances")
+SCHEDULES_TABLE = os.environ.get("DYNAMODB_SCHEDULES_TABLE", "KDT-Msp4-PLDR-schedules")
+VENUES_TABLE = os.environ.get("DYNAMODB_VENUES_TABLE", "KDT-Msp4-PLDR-venues")
 
 DAY_MAP = { "일": 0, "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6 }
 REVERSE_DAY_MAP = ["일", "월", "화", "수", "목", "금", "토"]

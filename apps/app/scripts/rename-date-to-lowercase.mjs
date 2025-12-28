@@ -4,7 +4,7 @@ import { DynamoDBDocumentClient, UpdateCommand, ScanCommand } from "@aws-sdk/lib
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const TABLE_NAME = process.env.DYNAMODB_TABLE_PERFORMANCES || "KDT-Msp4-PLDR-performances";
+const TABLE_NAME = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
 
 async function renameToLowercase() {
     console.log("Scanning for items to rename fields...");

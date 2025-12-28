@@ -4,8 +4,8 @@ import { DynamoDBDocumentClient, ScanCommand, PutCommand, BatchWriteCommand, Upd
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const PERFORMANCES_TABLE = "KDT-Msp4-PLDR-performances";
-const SCHEDULES_TABLE = "KDT-Msp4-PLDR-schedules";
+const PERFORMANCES_TABLE = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
+const SCHEDULES_TABLE = process.env.DYNAMODB_SCHEDULES_TABLE || "KDT-Msp4-PLDR-schedules";
 
 const DAY_MAP = {
     "일": 0, "월": 1, "화": 2, "수": 3, "목": 4, "금": 5, "토": 6

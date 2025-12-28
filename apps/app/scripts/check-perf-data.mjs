@@ -5,7 +5,7 @@ import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const PERFORMANCES_TABLE = "KDT-Msp4-PLDR-performances";
+const PERFORMANCES_TABLE = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
 
 async function check() {
     const ids = ["perf-kinky-1", "perf-phantom-of-the-opera-1"];

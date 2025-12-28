@@ -6,10 +6,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
-const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
-const docClient = DynamoDBDocumentClient.from(client);
-
-const RESERVATIONS_TABLE = "KDT-Msp4-PLDR-reservations";
+const RESERVATIONS_TABLE = process.env.DYNAMODB_RESERVATIONS_TABLE || "KDT-Msp4-PLDR-reservations";
 
 async function deleteAllReservations() {
     console.log("🗑️ 기존 예약/선점 데이터 삭제 시작...\n");

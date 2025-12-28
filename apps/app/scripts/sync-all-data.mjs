@@ -6,10 +6,10 @@ const docClient = DynamoDBDocumentClient.from(client, {
     marshallOptions: { removeUndefinedValues: true }
 });
 
-const PERFORMANCES_TABLE = process.env.DYNAMODB_TABLE_PERFORMANCES || "KDT-Msp4-PLDR-performances";
-const VENUES_TABLE = process.env.DYNAMODB_TABLE_VENUES || "KDT-Msp4-PLDR-venues";
-const SCHEDULES_TABLE = process.env.DYNAMODB_TABLE_SCHEDULES || "KDT-Msp4-PLDR-schedules";
-const RESERVATIONS_TABLE = process.env.DYNAMODB_TABLE_RESERVATIONS || "KDT-Msp4-PLDR-reservations";
+const PERFORMANCES_TABLE = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
+const VENUES_TABLE = process.env.DYNAMODB_VENUES_TABLE || "KDT-Msp4-PLDR-venues";
+const SCHEDULES_TABLE = process.env.DYNAMODB_SCHEDULES_TABLE || "KDT-Msp4-PLDR-schedules";
+const RESERVATIONS_TABLE = process.env.DYNAMODB_RESERVATIONS_TABLE || "KDT-Msp4-PLDR-reservations";
 
 async function syncAllData() {
     console.log("🚀 Starting Full Denormalization Sync (V7.8)...");

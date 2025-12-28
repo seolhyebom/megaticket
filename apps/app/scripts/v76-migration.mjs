@@ -5,8 +5,8 @@ import { DynamoDBDocumentClient, UpdateCommand, ScanCommand } from "@aws-sdk/lib
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const VENUES_TABLE = process.env.DYNAMODB_TABLE_VENUES || "KDT-Msp4-PLDR-venues";
-const PERFORMANCES_TABLE = process.env.DYNAMODB_TABLE_PERFORMANCES || "KDT-Msp4-PLDR-performances";
+const VENUES_TABLE = process.env.DYNAMODB_VENUES_TABLE || "KDT-Msp4-PLDR-venues";
+const PERFORMANCES_TABLE = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
 
 // 1. Define Seat Grades for Performances (V7.6)
 const PERF_seatGrades = {

@@ -5,7 +5,7 @@ import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const PERFORMANCES_TABLE = process.env.DYNAMODB_TABLE_PERFORMANCES || "KDT-Msp4-PLDR-performances";
+const PERFORMANCES_TABLE = process.env.DYNAMODB_PERFORMANCES_TABLE || "KDT-Msp4-PLDR-performances";
 
 // 1. Define Sections for Charlotte Theater
 const generateSection = (id, label, floor, rows, seatsPerRow) => {

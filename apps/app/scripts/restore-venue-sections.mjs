@@ -4,7 +4,7 @@ import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 const client = new DynamoDBClient({ region: process.env.AWS_REGION || "ap-northeast-2" });
 const docClient = DynamoDBDocumentClient.from(client);
 
-const VENUES_TABLE = process.env.DYNAMODB_TABLE_VENUES || "KDT-Msp4-PLDR-venues";
+const VENUES_TABLE = process.env.DYNAMODB_VENUES_TABLE || "KDT-Msp4-PLDR-venues";
 
 /**
  * V7.13 - Charlotte Theater Seating Layout
