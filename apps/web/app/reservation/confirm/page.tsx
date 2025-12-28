@@ -81,30 +81,27 @@ function ReservationConfirmContent() {
         }
     }, [router, holdingId, expiresAt, remainingSecondsParam])
 
-    // 2. Timer Logic
+
+    // 2. Timer Logic - Countdown 방식 (서버 시간 차이 문제 해결)
     useEffect(() => {
-        if (!session || !holdingId || !expiresAt) return
+        if (!session || !holdingId) return
 
-        const expireTime = new Date(expiresAt).getTime()
-
-        const updateTimer = () => {
-            const now = new Date().getTime()
-            const diff = Math.floor((expireTime - now) / 1000)
-
-            if (diff <= 0) {
-                setTimeLeft(0)
-                if (!isTimeoutHandled.current) {
-                    handleTimeout()
+        // 매초 1씩 감소하는 countdown 방식
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    clearInterval(timer)
+                    if (!isTimeoutHandled.current) {
+                        handleTimeout()
+                    }
+                    return 0
                 }
-            } else {
-                setTimeLeft(diff)
-            }
-        }
+                return prev - 1
+            })
+        }, 1000)
 
-        updateTimer()
-        const timer = setInterval(updateTimer, 1000)
         return () => clearInterval(timer)
-    }, [session, holdingId, expiresAt, handleTimeout])
+    }, [session, holdingId, handleTimeout])
 
     const handlePayment = async () => {
         if (isProcessing) return

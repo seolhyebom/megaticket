@@ -74,18 +74,483 @@ EC2 → AMI → 상태가 "available"이 될 때까지 대기 (5~10분 소요)
 
 ---
 
-## Step 3: 도쿄 리전 인프라 준비
+## Step 3: 도쿄 리전 인프라 준비 (Terraform)
 
-### 3.1 VPC 및 서브넷 확인
+> 💡 **Terraform은 개발자 PC나 CI/CD에서 실행**합니다. Golden AMI에 포함되는 것이 아닙니다.
 
-도쿄 리전에 다음이 준비되어 있어야 합니다:
+### 3.0 Terraform 코드 예시 (단순 테스트용)
+
+아래 코드를 `terraform/dr-tokyo/` 폴더에 저장하고 실행합니다.
+
+<details>
+<summary><b>📁 main.tf (클릭하여 펼치기)</b></summary>
+
+```hcl
+# =============================================================================
+# DR Tokyo Region - Simple Test Infrastructure
+# =============================================================================
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-northeast-1"  # 도쿄 리전
+}
+
+# -----------------------------------------------------------------------------
+# Variables
+# -----------------------------------------------------------------------------
+variable "web_ami_id" {
+  description = "Web Golden AMI ID (도쿄 리전에 복사된 AMI)"
+  type        = string
+}
+
+variable "app_ami_id" {
+  description = "App Golden AMI ID (도쿄 리전에 복사된 AMI)"
+  type        = string
+}
+
+variable "key_pair_name" {
+  description = "도쿄 리전 키 페어 이름"
+  type        = string
+  default     = "dr-tokyo-keypair"
+}
+
+# -----------------------------------------------------------------------------
+# VPC
+# -----------------------------------------------------------------------------
+resource "aws_vpc" "dr_vpc" {
+  cidr_block           = "10.1.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name = "MegaTicket-DR-VPC"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Internet Gateway
+# -----------------------------------------------------------------------------
+resource "aws_internet_gateway" "dr_igw" {
+  vpc_id = aws_vpc.dr_vpc.id
+
+  tags = {
+    Name = "MegaTicket-DR-IGW"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Subnets
+# -----------------------------------------------------------------------------
+resource "aws_subnet" "public_1a" {
+  vpc_id                  = aws_vpc.dr_vpc.id
+  cidr_block              = "10.1.1.0/24"
+  availability_zone       = "ap-northeast-1a"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "MegaTicket-DR-Public-1a"
+  }
+}
+
+resource "aws_subnet" "public_1c" {
+  vpc_id                  = aws_vpc.dr_vpc.id
+  cidr_block              = "10.1.2.0/24"
+  availability_zone       = "ap-northeast-1c"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "MegaTicket-DR-Public-1c"
+  }
+}
+
+resource "aws_subnet" "private_1a" {
+  vpc_id            = aws_vpc.dr_vpc.id
+  cidr_block        = "10.1.10.0/24"
+  availability_zone = "ap-northeast-1a"
+
+  tags = {
+    Name = "MegaTicket-DR-Private-1a"
+  }
+}
+
+resource "aws_subnet" "private_1c" {
+  vpc_id            = aws_vpc.dr_vpc.id
+  cidr_block        = "10.1.11.0/24"
+  availability_zone = "ap-northeast-1c"
+
+  tags = {
+    Name = "MegaTicket-DR-Private-1c"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# NAT Gateway (테스트용 - 비용 발생 주의!)
+# -----------------------------------------------------------------------------
+resource "aws_eip" "nat_eip" {
+  domain = "vpc"
+
+  tags = {
+    Name = "MegaTicket-DR-NAT-EIP"
+  }
+}
+
+resource "aws_nat_gateway" "dr_nat" {
+  allocation_id = aws_eip.nat_eip.id
+  subnet_id     = aws_subnet.public_1a.id
+
+  tags = {
+    Name = "MegaTicket-DR-NAT"
+  }
+
+  depends_on = [aws_internet_gateway.dr_igw]
+}
+
+# -----------------------------------------------------------------------------
+# Route Tables
+# -----------------------------------------------------------------------------
+resource "aws_route_table" "public_rt" {
+  vpc_id = aws_vpc.dr_vpc.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.dr_igw.id
+  }
+
+  tags = {
+    Name = "MegaTicket-DR-Public-RT"
+  }
+}
+
+resource "aws_route_table" "private_rt" {
+  vpc_id = aws_vpc.dr_vpc.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.dr_nat.id
+  }
+
+  tags = {
+    Name = "MegaTicket-DR-Private-RT"
+  }
+}
+
+resource "aws_route_table_association" "public_1a" {
+  subnet_id      = aws_subnet.public_1a.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "public_1c" {
+  subnet_id      = aws_subnet.public_1c.id
+  route_table_id = aws_route_table.public_rt.id
+}
+
+resource "aws_route_table_association" "private_1a" {
+  subnet_id      = aws_subnet.private_1a.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+resource "aws_route_table_association" "private_1c" {
+  subnet_id      = aws_subnet.private_1c.id
+  route_table_id = aws_route_table.private_rt.id
+}
+
+# -----------------------------------------------------------------------------
+# Security Groups
+# -----------------------------------------------------------------------------
+resource "aws_security_group" "alb_sg" {
+  name        = "MegaTicket-DR-ALB-SG"
+  description = "ALB Security Group"
+  vpc_id      = aws_vpc.dr_vpc.id
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "MegaTicket-DR-ALB-SG"
+  }
+}
+
+resource "aws_security_group" "web_sg" {
+  name        = "MegaTicket-DR-Web-SG"
+  description = "Web Instance Security Group"
+  vpc_id      = aws_vpc.dr_vpc.id
+
+  ingress {
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "MegaTicket-DR-Web-SG"
+  }
+}
+
+resource "aws_security_group" "app_sg" {
+  name        = "MegaTicket-DR-App-SG"
+  description = "App Instance Security Group"
+  vpc_id      = aws_vpc.dr_vpc.id
+
+  ingress {
+    from_port       = 3001
+    to_port         = 3001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb_sg.id, aws_security_group.web_sg.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "MegaTicket-DR-App-SG"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# IAM Role (SSM + DynamoDB + Bedrock)
+# -----------------------------------------------------------------------------
+resource "aws_iam_role" "ec2_role" {
+  name = "MegaTicket-DR-EC2-Role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_role_policy_attachment" "dynamodb" {
+  role       = aws_iam_role.ec2_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+  name = "MegaTicket-DR-EC2-Profile"
+  role = aws_iam_role.ec2_role.name
+}
+
+# -----------------------------------------------------------------------------
+# EC2 Instances (Golden AMI 사용)
+# -----------------------------------------------------------------------------
+resource "aws_instance" "web" {
+  ami                    = var.web_ami_id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.private_1a.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  key_name               = var.key_pair_name
+
+  tags = {
+    Name = "MegaTicket-DR-Web"
+  }
+}
+
+resource "aws_instance" "app" {
+  ami                    = var.app_ami_id
+  instance_type          = "t2.micro"
+  subnet_id              = aws_subnet.private_1a.id
+  vpc_security_group_ids = [aws_security_group.app_sg.id]
+  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  key_name               = var.key_pair_name
+
+  tags = {
+    Name = "MegaTicket-DR-App"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Application Load Balancer
+# -----------------------------------------------------------------------------
+resource "aws_lb" "dr_alb" {
+  name               = "MegaTicket-DR-ALB"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb_sg.id]
+  subnets            = [aws_subnet.public_1a.id, aws_subnet.public_1c.id]
+
+  tags = {
+    Name = "MegaTicket-DR-ALB"
+  }
+}
+
+resource "aws_lb_target_group" "web_tg" {
+  name     = "MegaTicket-DR-Web-TG"
+  port     = 3000
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.dr_vpc.id
+
+  health_check {
+    path                = "/"
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 5
+    interval            = 30
+  }
+}
+
+resource "aws_lb_target_group" "app_tg" {
+  name     = "MegaTicket-DR-App-TG"
+  port     = 3001
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.dr_vpc.id
+
+  health_check {
+    path                = "/api/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 5
+    interval            = 30
+  }
+}
+
+resource "aws_lb_target_group_attachment" "web" {
+  target_group_arn = aws_lb_target_group.web_tg.arn
+  target_id        = aws_instance.web.id
+  port             = 3000
+}
+
+resource "aws_lb_target_group_attachment" "app" {
+  target_group_arn = aws_lb_target_group.app_tg.arn
+  target_id        = aws_instance.app.id
+  port             = 3001
+}
+
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.dr_alb.arn
+  port              = 80
+  protocol          = "HTTP"
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.web_tg.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "api" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 1
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app_tg.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/*"]
+    }
+  }
+}
+
+# -----------------------------------------------------------------------------
+# Outputs
+# -----------------------------------------------------------------------------
+output "alb_dns" {
+  value = aws_lb.dr_alb.dns_name
+}
+
+output "web_instance_id" {
+  value = aws_instance.web.id
+}
+
+output "app_instance_id" {
+  value = aws_instance.app.id
+}
+
+output "app_private_ip" {
+  value = aws_instance.app.private_ip
+}
+```
+
+</details>
+
+### 3.1 Terraform 실행 방법
+
+```bash
+# 1. 디렉토리 이동
+cd terraform/dr-tokyo
+
+# 2. 초기화
+terraform init
+
+# 3. 변수 파일 생성 (terraform.tfvars)
+cat << EOF > terraform.tfvars
+web_ami_id    = "ami-xxxxxxxxx"  # 도쿄로 복사한 Web AMI ID
+app_ami_id    = "ami-yyyyyyyyy"  # 도쿄로 복사한 App AMI ID
+key_pair_name = "dr-tokyo-keypair"
+EOF
+
+# 4. 계획 확인
+terraform plan
+
+# 5. 인프라 생성
+terraform apply
+
+# 6. 테스트 후 정리 (비용 절감!)
+terraform destroy
+```
+
+### 3.2 수동으로 준비할 경우
+
+Terraform 없이 AWS 콘솔에서 수동으로 준비하려면 다음이 필요합니다:
+
 - [ ] VPC (CIDR: 10.1.0.0/16 등)
 - [ ] Private Subnet (최소 2개 AZ)
 - [ ] Public Subnet (ALB용)
 - [ ] NAT Gateway 또는 NAT Instance
 - [ ] Internet Gateway
 
-### 3.2 보안 그룹 생성
+### 3.3 보안 그룹 생성
 
 도쿄 리전에서 보안 그룹을 생성합니다:
 
