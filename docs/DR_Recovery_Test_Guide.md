@@ -524,11 +524,19 @@ cd terraform/dr-tokyo
 terraform init
 
 # 3. 변수 파일 생성 (terraform.tfvars)
+# Linux/Mac:
 cat << EOF > terraform.tfvars
-web_ami_id    = "ami-xxxxxxxxx"  # 도쿄로 복사한 Web AMI ID
-app_ami_id    = "ami-yyyyyyyyy"  # 도쿄로 복사한 App AMI ID
+web_ami_id    = "ami-xxxxxxxxx"
+app_ami_id    = "ami-yyyyyyyyy"
 key_pair_name = "dr-tokyo-keypair"
 EOF
+
+# Windows PowerShell:
+Set-Content -Path terraform.tfvars -Value @"
+web_ami_id    = "ami-xxxxxxxxx"
+app_ami_id    = "ami-yyyyyyyyy"
+key_pair_name = "dr-tokyo-keypair"
+"@
 
 # 4. 계획 확인
 terraform plan
@@ -570,11 +578,13 @@ Terraform 없이 AWS 콘솔에서 수동으로 준비하려면 다음이 필요�
 
 ## Step 4: 도쿄 리전에서 인스턴스 복구
 
+> 💡 **User Data를 사용하면 인스턴스 접속 없이 환경변수 자동 설정 가능!**
+
 ### 4.1 리전 전환
 
 AWS 콘솔 우측 상단 → **도쿄 (ap-northeast-1)** 선택
 
-### 4.2 Web 인스턴스 시작
+### 4.2 Web 인스턴스 시작 (User Data 사용)
 
 1. **EC2 → AMI** → `MegaTicket-Web-GoldenAMI-YYYYMMDD-DR` 선택
 2. **AMI에서 인스턴스 시작**
@@ -587,9 +597,41 @@ AWS 콘솔 우측 상단 → **도쿄 (ap-northeast-1)** 선택
    | 서브넷 | Private Subnet |
    | 보안 그룹 | Web용 보안그룹 |
    | IAM 역할 | SSM + DynamoDB 권한 |
-4. **인스턴스 시작** 클릭
 
-### 4.3 App 인스턴스 시작
+4. **고급 세부 정보** 섹션을 펼치고, **User Data**에 아래 스크립트 입력:
+
+```bash
+#!/bin/bash
+# DR 리전 환경변수 설정 (도쿄)
+export HOME=/home/ssm-user
+cd $HOME
+
+# 환경변수 설정 (.bashrc에 추가) - 총 3개
+echo 'export AWS_REGION=ap-northeast-1' >> /home/ssm-user/.bashrc
+echo 'export INTERNAL_API_URL=https://pilotlight-test.click' >> /home/ssm-user/.bashrc
+echo 'export DR_RECOVERY_MODE=true' >> /home/ssm-user/.bashrc
+
+# NVM 및 PM2 환경 로드
+source /home/ssm-user/.nvm/nvm.sh
+
+# PM2 권한 수정 (Golden AMI에서 다른 사용자로 설정된 경우 필요)
+sudo chown -R ssm-user:ssm-user /home/ssm-user/.pm2 2>/dev/null || true
+
+# PM2 환경변수 업데이트 및 재시작
+cd /home/ssm-user/megaticket/apps/web
+export AWS_REGION=ap-northeast-1
+export INTERNAL_API_URL=https://pilotlight-test.click
+export DR_RECOVERY_MODE=true
+
+# 기존 프로세스 정리 후 새로 시작
+pm2 delete web-frontend 2>/dev/null || true
+pm2 start npm --name "web-frontend" -- start
+pm2 save
+```
+
+5. **인스턴스 시작** 클릭
+
+### 4.3 App 인스턴스 시작 (User Data 사용)
 
 1. **EC2 → AMI** → `MegaTicket-App-GoldenAMI-YYYYMMDD-DR` 선택
 2. **AMI에서 인스턴스 시작**
@@ -602,13 +644,50 @@ AWS 콘솔 우측 상단 → **도쿄 (ap-northeast-1)** 선택
    | 서브넷 | Private Subnet |
    | 보안 그룹 | App용 보안그룹 |
    | IAM 역할 | SSM + Bedrock + DynamoDB 권한 |
-4. **인스턴스 시작** 클릭
+
+4. **고급 세부 정보** 섹션을 펼치고, **User Data**에 아래 스크립트 입력:
+
+```bash
+#!/bin/bash
+# DR 리전 환경변수 설정 (도쿄)
+export HOME=/home/ssm-user
+cd $HOME
+
+# 환경변수 설정 (.bashrc에 추가) - 총 2개
+echo 'export AWS_REGION=ap-northeast-1' >> /home/ssm-user/.bashrc
+echo 'export DR_RECOVERY_MODE=true' >> /home/ssm-user/.bashrc
+
+# NVM 및 PM2 환경 로드
+source /home/ssm-user/.nvm/nvm.sh
+
+# PM2 권한 수정 (Golden AMI에서 다른 사용자로 설정된 경우 필요)
+sudo chown -R ssm-user:ssm-user /home/ssm-user/.pm2 2>/dev/null || true
+
+# PM2 환경변수 업데이트 및 재시작
+cd /home/ssm-user/megaticket/apps/app
+export AWS_REGION=ap-northeast-1
+export DR_RECOVERY_MODE=true
+
+# 기존 프로세스 정리 후 새로 시작
+pm2 delete app-backend 2>/dev/null || true
+pm2 start npm --name "app-backend" -- start
+pm2 save
+```
+
+5. **인스턴스 시작** 클릭
+
+> ⚠️ **주의**: User Data는 **첫 번째 시작 시에만 실행**됩니다. 인스턴스를 Stop → Start 하면 다시 실행되지 않습니다.
 
 ---
 
-## Step 5: 인스턴스 설정 업데이트
+## Step 5: 인스턴스 설정 업데이트 (선택 - User Data 미사용 시만)
 
-### 5.1 App 인스턴스 접속 (SSM)
+> ✅ **User Data를 사용했다면 이 단계는 건너뛰세요!**
+>
+> Step 4에서 User Data를 입력했다면 환경변수 설정과 PM2 재시작이 **자동으로 완료**됩니다.
+> 아래는 User Data 없이 수동으로 인스턴스를 시작한 경우에만 필요합니다.
+
+### 5.1 App 인스턴스 접속 (SSM) - User Data 미사용 시만
 
 ```bash
 # NVM 활성화
@@ -616,6 +695,7 @@ AWS 콘솔 우측 상단 → **도쿄 (ap-northeast-1)** 선택
 
 # 리전 환경변수 업데이트 (도쿄)
 export AWS_REGION=ap-northeast-1
+export DR_RECOVERY_MODE=true
 
 # PM2 상태 확인
 pm2 list
@@ -626,7 +706,7 @@ cd ~/megaticket/apps/app
 pm2 start npm --name "app-backend" -- start
 ```
 
-### 5.2 Web 인스턴스 접속 (SSM)
+### 5.2 Web 인스턴스 접속 (SSM) - User Data 미사용 시만
 
 ```bash
 # NVM 활성화
@@ -634,12 +714,8 @@ pm2 start npm --name "app-backend" -- start
 
 # 리전 환경변수 업데이트
 export AWS_REGION=ap-northeast-1
-
-# INTERNAL_API_URL 업데이트 (App 인스턴스 Private IP로 변경)
-export INTERNAL_API_URL=http://<DR_App_Private_IP>:3001
-
-# 또는 도쿄 ALB가 있다면 도메인 사용
-# export INTERNAL_API_URL=https://pilotlight-test.click
+export INTERNAL_API_URL=https://pilotlight-test.click
+export DR_RECOVERY_MODE=true
 
 # PM2 재시작
 pm2 restart web-frontend --update-env
@@ -699,7 +775,7 @@ curl http://<App_Private_IP>:3001/api/health
 curl http://<DR_ALB_DNS>/
 curl http://<DR_ALB_DNS>/api/health
 ```
-
+t
 ### 7.3 DynamoDB Global Table 확인
 
 ```bash
