@@ -74,7 +74,7 @@ export AWS_REGION=ap-northeast-2
 
 # ★ App 인스턴스 API 연결을 위한 환경변수 (필수!)
 # [테스트 환경] 단일 인스턴스 - Private IP 사용
-export INTERNAL_API_URL=http://<App_Private_IP>:3001
+# export INTERNAL_API_URL=http://<App_Private_IP>:3001
 
 # [프로덕션 환경] Route 53 + ALB + Auto Scaling - 도메인 사용
 # export INTERNAL_API_URL=https://pilotlight-test.click
@@ -100,10 +100,15 @@ pm2 startup
 # 1. App 폴더로 이동
 cd ~/megaticket/apps/app
 
-# 2. 환경변수 설정
+# 2. 환경변수 설정 (서울 리전 기본값)
 export AWS_REGION=ap-northeast-2
 
-# (선택) 장애 복구 테스트 시
+# 영구 설정 (재접속 시에도 유지)
+echo 'export AWS_REGION=ap-northeast-2' >> ~/.bashrc
+
+# (DR 리전 배포 시)
+# export AWS_REGION=ap-northeast-1
+# echo 'export AWS_REGION=ap-northeast-1' >> ~/.bashrc
 # export DR_RECOVERY_MODE=true
 
 # 3. 빌드

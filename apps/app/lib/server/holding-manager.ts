@@ -81,8 +81,19 @@ export async function createHolding(
 
 
     try {
+        // [DEBUG] 호출 파라미터 로깅
+        console.log('[HOLDING] createHolding called:', {
+            performanceId,
+            date,
+            time,
+            pk,
+            seatIds: seats.map(s => s.seatId),
+            userId
+        });
+
         // Check availability first
         const { available, conflicts } = await areSeatsAvailable(performanceId, seats.map(s => s.seatId), date, time);
+        console.log('[HOLDING] areSeatsAvailable result:', { available, conflicts });
         if (!available) {
             return {
                 success: false,
@@ -419,9 +430,9 @@ export async function getSeatStatusMap(performanceId: string, date: string, time
         (resResult.Items || []).forEach(item => {
             const seatId = item.SK.replace('SEAT#', '');
             console.log(`[getSeatStatusMap] Item: seatId=${seatId}, status=${item.status}`);
-            if (item.status === 'CONFIRMED') {
+            if (item.status === 'CONFIRMED' || item.status === 'DR_RECOVERED') {
                 statusMap[seatId] = 'reserved';
-            } else if (item.status === 'HOLDING' || item.status === 'DR_RECOVERED') {
+            } else if (item.status === 'HOLDING') {
                 // [V7.10.3] 만료된 HOLDING은 available로 처리
                 const expiresAt = item.expiresAt;
                 if (expiresAt && expiresAt < now) {

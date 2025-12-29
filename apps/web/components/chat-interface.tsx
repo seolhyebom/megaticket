@@ -145,6 +145,7 @@ export function ChatInterface() {
 
                         // Update global timer if present
                         if (parsed.timer) {
+                            console.log('[Timer] Setting activeTimer from ACTION_DATA:', parsed.timer);
                             setActiveTimer(parsed.timer);
                         }
 
@@ -225,9 +226,20 @@ export function ChatInterface() {
         if (!isoString) return '--:--';
         try {
             const date = new Date(isoString);
-            if (isNaN(date.getTime())) return '--:--'; // Check for invalid date
-            const diff = Math.floor((date.getTime() - new Date().getTime()) / 1000);
+            if (isNaN(date.getTime())) {
+                console.warn('[Timer] Invalid expiresAt:', isoString);
+                return '--:--'; // Check for invalid date
+            }
+            let diff = Math.floor((date.getTime() - new Date().getTime()) / 1000);
             if (diff <= 0) return "0:00";
+
+            // [V7.14] 방어 로직: 선점 시간은 최대 60초이므로 이를 초과하면 잘못된 값
+            // 2분(120초) 이상이면 AI가 잘못된 expiresAt을 생성한 것으로 간주
+            if (diff > 120) {
+                console.warn('[Timer] expiresAt too far in future, likely AI error:', isoString, 'diff:', diff);
+                diff = 60; // 60초로 강제 설정
+            }
+
             return `${Math.floor(diff / 60)}:${String(diff % 60).padStart(2, '0')}`;
         } catch (e) {
             console.error("Error formatting time:", e);

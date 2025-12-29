@@ -606,8 +606,9 @@ AWS 콘솔 우측 상단 → **도쿄 (ap-northeast-1)** 선택
 export HOME=/home/ssm-user
 cd $HOME
 
-# 환경변수 설정 (.bashrc에 추가) - 총 3개
+# 환경변수 설정 (.bashrc에 추가) - 총 4개
 echo 'export AWS_REGION=ap-northeast-1' >> /home/ssm-user/.bashrc
+echo 'export NEXT_PUBLIC_AWS_REGION=ap-northeast-1' >> /home/ssm-user/.bashrc
 echo 'export INTERNAL_API_URL=https://pilotlight-test.click' >> /home/ssm-user/.bashrc
 echo 'export DR_RECOVERY_MODE=true' >> /home/ssm-user/.bashrc
 
@@ -617,9 +618,16 @@ source /home/ssm-user/.nvm/nvm.sh
 # PM2 권한 수정 (Golden AMI에서 다른 사용자로 설정된 경우 필요)
 sudo chown -R ssm-user:ssm-user /home/ssm-user/.pm2 2>/dev/null || true
 
-# PM2 환경변수 업데이트 및 재시작
+# .env.local 파일 수정 (도쿄 리전으로 변경)
 cd /home/ssm-user/megaticket/apps/web
+if [ -f .env.local ]; then
+    sed -i 's/AWS_REGION=ap-northeast-2/AWS_REGION=ap-northeast-1/g' .env.local
+    grep -q "NEXT_PUBLIC_AWS_REGION" .env.local || echo "NEXT_PUBLIC_AWS_REGION=ap-northeast-1" >> .env.local
+fi
+
+# PM2 환경변수 업데이트 및 재시작
 export AWS_REGION=ap-northeast-1
+export NEXT_PUBLIC_AWS_REGION=ap-northeast-1
 export INTERNAL_API_URL=https://pilotlight-test.click
 export DR_RECOVERY_MODE=true
 
@@ -816,4 +824,62 @@ t
 1. **DynamoDB Global Table**: 도쿄 리전에 복제본이 있어야 데이터 접근 가능
 2. **IAM Role**: 도쿄 리전에도 동일한 권한의 IAM Role 필요
 3. **키 페어**: 도쿄 리전용 키 페어 별도 생성 필요
-4. **환경변수**: `AWS_REGION`을 `ap-northeast-1`로 변경 필수
+4. **환경변수**: `AWS_REGION`, `NEXT_PUBLIC_AWS_REGION`을 `ap-northeast-1`로 변경 필수
+
+---
+
+## 🖥️ 로컬 DR 테스트 방법
+
+로컬 개발환경에서 DR 상황을 시뮬레이션하려면 환경변수를 설정합니다.
+
+### PowerShell (Windows)
+
+```powershell
+# 환경변수 설정 (도쿄 리전)
+$env:AWS_REGION = "ap-northeast-1"
+$env:NEXT_PUBLIC_AWS_REGION = "ap-northeast-1"
+$env:DR_RECOVERY_MODE = "true"
+
+# 확인
+echo "AWS_REGION: $env:AWS_REGION"
+echo "NEXT_PUBLIC_AWS_REGION: $env:NEXT_PUBLIC_AWS_REGION"
+echo "DR_RECOVERY_MODE: $env:DR_RECOVERY_MODE"
+
+# dev 서버 실행
+npm run dev
+```
+
+### 서울 리전으로 복귀
+
+```powershell
+# 환경변수 초기화
+$env:AWS_REGION = "ap-northeast-2"
+$env:NEXT_PUBLIC_AWS_REGION = "ap-northeast-2"
+Remove-Item Env:DR_RECOVERY_MODE -ErrorAction SilentlyContinue
+
+# 또는 새 터미널 세션 열기
+```
+
+> 💡 **참고**: 코드의 기본값이 `ap-northeast-2`(서울)이므로, 환경변수를 설정하지 않으면 자동으로 서울 리전으로 동작합니다.
+
+### 중요: 사전 설정 필수
+
+로컬 DR 테스트가 정상 동작하려면 다음 조건이 충족되어야 합니다:
+
+1. **`turbo.json`에 환경변수 전달 설정**이 되어 있어야 함:
+   ```json
+   "dev": {
+       "cache": false,
+       "persistent": true,
+       "env": [
+           "AWS_REGION",
+           "NEXT_PUBLIC_AWS_REGION",
+           "DR_RECOVERY_MODE"
+       ]
+   }
+   ```
+
+2. **`.env` 파일에서 `AWS_REGION` 제거**:
+   - `apps/app/.env`: `AWS_REGION=ap-northeast-2` 줄 삭제
+   - `apps/web/.env.local`: `AWS_REGION=...` 줄 삭제 (있을 경우)
+

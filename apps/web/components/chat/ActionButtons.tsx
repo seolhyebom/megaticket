@@ -33,9 +33,13 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({ actions, onAction 
                     <button
                         key={action.id || `action-${index}`}
                         onClick={() => {
-                            // [V7.11] navigate 액션 처리 - 페이지 이동
-                            if (action.action === 'navigate' && (action as any).url) {
-                                window.location.href = (action as any).url;
+                            // [V7.12] navigate 액션 처리 - 페이지 이동 (새 창 또는 같은 창)
+                            if (action.action === 'navigate' && action.url) {
+                                if (action.target === '_blank') {
+                                    window.open(action.url, '_blank');
+                                } else {
+                                    window.location.href = action.url;
+                                }
                                 return;
                             }
                             onAction(action);

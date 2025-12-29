@@ -10,12 +10,14 @@ export interface SeatGradeDisplay {
 export interface ActionButton {
     id: string;
     label: string;
-    action?: string; // tool name to call
+    action?: string; // tool name to call, or 'navigate' for URL navigation
     type?: 'message' | 'action'; // V7.6 explicit type
     text?: string; // text to send if type is message
     style?: 'primary' | 'secondary' | 'danger';
     data?: any;
     disabled?: boolean;
+    url?: string; // V7.12: URL for navigate action
+    target?: '_blank' | '_self'; // V7.12: open in new window or same window
 }
 
 export interface TimerInfo {
