@@ -5,7 +5,8 @@ import { Seat } from "@mega-ticket/shared-types";
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { performanceId, seats, userId, date, time } = body;
+        // V7.20: venue, performanceTitle, posterUrl 추가
+        const { performanceId, seats, userId, date, time, venue, performanceTitle, posterUrl } = body;
 
         if (!performanceId || !seats || !userId || !date || !time) {
             return NextResponse.json(
@@ -14,9 +15,11 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`[REALTIME] [HOLDING] [API POST /holdings] Request:`, { performanceId, seatCount: seats.length, userId });
+        console.log(`[REALTIME] [HOLDING] [API POST /holdings] Request:`, { performanceId, seatCount: seats.length, userId, venue, performanceTitle, posterUrl });
 
-        const result = await createHolding(performanceId, seats as Seat[], userId, date, time);
+        // V7.20: venue, performanceTitle, posterUrl 전달
+        const result = await createHolding(performanceId, seats as Seat[], userId, date, time, venue, performanceTitle, posterUrl);
+
 
         if (!result.success) {
             return NextResponse.json(

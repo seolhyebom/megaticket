@@ -68,6 +68,6 @@ export interface Reservation {
     time: string;
     seats: Seat[];
     totalPrice: number;
-    status: 'confirmed' | 'cancelled' | 'dr_recovered';  // V7.14: DR_RECOVERED 상태 추가
+    status: 'confirmed' | 'cancelled' | 'dr_recovered' | 'dr_reserved';  // V7.16: DR_RESERVED 상태 추가
     createdAt: string;
 }

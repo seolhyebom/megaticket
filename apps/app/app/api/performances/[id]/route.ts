@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getPerformance } from "@/lib/server/performance-service";
 
+// export const dynamic = 'force-dynamic';
+
 export async function GET(
     request: NextRequest,
     props: { params: Promise<{ id: string }> }

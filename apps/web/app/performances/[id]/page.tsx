@@ -75,7 +75,7 @@ export default async function PerformancePage({ params }: { params: Promise<{ id
                                 </div>
                                 <div className="flex items-center text-gray-200 text-lg">
                                     <MapPin className="w-5 h-5 mr-2 text-primary" />
-                                    {performance.venueId}
+                                    {performance.venue || performance.venueId}
                                 </div>
                             </div>
                         </div>

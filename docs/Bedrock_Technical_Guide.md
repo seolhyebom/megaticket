@@ -868,7 +868,9 @@ for await (const event of response.stream) {
     1.  사용자가 **서울 리전**에서 좌석을 **선점(Holding)** 하고 결제 중이었는데, 갑자기 **서울 리전 장애 발생**.
     2.  사용자는 자동으로 **도쿄 리전(DR)**으로 라우팅되어 접속.
     3.  **FALSE인 경우**: 도쿄 리전은 "이 선점 데이터(서울 생성)는 만료되었거나 비정상적이다"라고 판단하여 **예약 거부**.
-    4.  **TRUE인 경우**: "비상 상황이므로, 이 선점 데이터가 조금 지났더라도 **복구된 데이터(DR_RECOVERED)** 로 인정하자!" 라고 판단.
+    4.  **TRUE인 경우**: 아래 로직으로 상태 결정:
+        - **DR_RECOVERED**: `holdingCreatedAt < DR_RECOVERY_START_TIME` → Main에서 장애 전 선점한 건 (15분 유예)
+        - **DR_RESERVED**: `holdingCreatedAt >= DR_RECOVERY_START_TIME` → DR에서 새로 예약한 건 (영구 보존)
 *   **효과**: 장애 상황에서 사용자의 **진행 중인 예약(In-flight Transaction)을 구제**하여 오류 없이 예약을 마무리할 수 있게 해줍니다.
 
 #### Docker 환경 (docker-compose.yml) 매핑 확인

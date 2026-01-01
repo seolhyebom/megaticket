@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Reservation, ReservationCard } from "@/components/reservation-card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
@@ -11,8 +11,12 @@ import { Ticket, Loader2 } from "lucide-react"
 export default function MyPage() {
     const { user, isLoading } = useAuth()
     const router = useRouter()
+    const searchParams = useSearchParams()  // V7.18: URL 쿼리에서 region 우선 사용
     const [reservations, setReservations] = useState<Reservation[]>([])
     const [fetching, setFetching] = useState(true)
+
+    // V7.18: URL 쿼리 > 환경변수 > 기본값 순으로 리전 결정
+    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2'
 
     useEffect(() => {
         // Redirect if not logged in
@@ -26,7 +30,8 @@ export default function MyPage() {
             if (!user) return
 
             try {
-                const res = await fetch(`/api/reservations?userId=${user.id}`)
+                console.log('[MyPage] Fetching reservations with region:', region);
+                const res = await fetch(`/api/reservations?userId=${user.id}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)
@@ -41,7 +46,8 @@ export default function MyPage() {
         if (user) {
             fetchReservations()
         }
-    }, [user])
+    }, [user, region])
+
 
     const handleCancelReservation = async (reservationId: string) => {
         try {
@@ -49,8 +55,8 @@ export default function MyPage() {
                 method: "DELETE"
             })
             if (res.ok) {
-                // Refresh list
-                const res = await fetch(`/api/reservations?userId=${user!.id}`)
+                // Refresh list - V7.18: 상위 스코프 region 사용
+                const res = await fetch(`/api/reservations?userId=${user!.id}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)
@@ -71,8 +77,8 @@ export default function MyPage() {
                 method: "DELETE"
             })
             if (res.ok) {
-                // Refresh list
-                const res = await fetch(`/api/reservations?userId=${user!.id}`)
+                // Refresh list - V7.18: 상위 스코프 region 사용
+                const res = await fetch(`/api/reservations?userId=${user!.id}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)
@@ -84,6 +90,11 @@ export default function MyPage() {
             console.error("Delete error", e)
             alert("오류가 발생했습니다.")
         }
+    }
+
+    // V7.19: 만료된 예약을 목록에서 제거 (로컬 상태에서만)
+    const handleRemoveFromList = (reservationId: string) => {
+        setReservations(prev => prev.filter(r => r.id !== reservationId))
     }
 
     if (isLoading || (user && fetching)) {
@@ -116,6 +127,7 @@ export default function MyPage() {
                             reservation={reservation}
                             onCancel={handleCancelReservation}
                             onDelete={handleDeleteReservation}
+                            onRemoveFromList={handleRemoveFromList}
                         />
                     ))}
                 </div>

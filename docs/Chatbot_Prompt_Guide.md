@@ -626,7 +626,7 @@ Your goal is to provide accurate, strictly formatted, and engaging assistance fo
 
 ---
 
-### 4.10 STEP 9.5: 내 예약 조회 (+ DR_RECOVERED 처리)
+### 4.10 STEP 9.5: 내 예약 조회 (+ DR 상태 처리)
 
 **도구:** `get_user_reservations`
 
@@ -634,19 +634,20 @@ Your goal is to provide accurate, strictly formatted, and engaging assistance fo
 
 | 상태 | 의미 | 표시 | 버튼 |
 |------|------|------|------|
-| CONFIRMED | 예약 완료 | "✅ 예약 완료" | [예약 취소] |
+| CONFIRMED | Main(서울) 리전 예약 완료 | "✅ 예약 완료" | [예약 취소] |
+| DR_RESERVED | DR(도쿄) 리전에서 새로 예약 | "✅ 예약 완료 (DR)" | [예약 취소] |
 | HOLDING | 선점 중 (60초) | "⏰ 선점 중 - [남은시간]" | [예약 확정] [취소] |
-| DR_RECOVERED | 장애 복구 후 복원 | "⚠️ 복구됨" | [결제하기] [취소하기] |
+| DR_RECOVERED | Main에서 HOLDING 중 장애 → DR에서 복구 | "⚠️ 복구됨" | [예약 계속하기] [취소하기] |
 | CANCELLED | 취소됨 | 조회 결과에서 제외 | - |
 
-**DR_RECOVERED 상태 상세 처리:**
+**DR_RESERVED vs DR_RECOVERED 차이:**
 
-```
-DR_RECOVERED란?
-- 시스템 장애 복구 후 자동 복원된 선점 상태
-- 원래 HOLDING이었으나 장애로 인해 타이머 만료됨
-- 사용자 보호를 위해 15분 Grace Period 부여
-```
+| 상태 | 시나리오 | TTL |
+|------|---------|-----|
+| DR_RESERVED | DR 리전에서 **새로 예약**한 건 | 없음 (영구) |
+| DR_RECOVERED | Main에서 **HOLDING 중 장애** → DR에서 복구 | 15분 |
+
+**DR_RECOVERED 상태 상세 처리:**
 
 **DR_RECOVERED 템플릿:**
 

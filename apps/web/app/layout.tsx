@@ -1,11 +1,17 @@
 
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import React, { Suspense } from "react";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { RegionIndicator } from "@/components/region-indicator";
 import "./globals.css";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+});
 
 export const metadata: Metadata = {
   title: "MegaTicket",
@@ -19,7 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body className="antialiased min-h-screen flex flex-col font-sans bg-background text-foreground">
+      <body
+        suppressHydrationWarning
+        className={`${inter.variable} antialiased min-h-screen flex flex-col font-sans bg-background text-foreground`}
+      >
         <AuthProvider>
           <SiteHeader />
           <main className="flex-1 flex flex-col">

@@ -24,6 +24,17 @@ export default function BookingPage() {
         apiClient.getPerformance(params.id as string)
             .then(data => {
                 setPerformance(data)
+
+                // V7.16 Fix: Automatically switch to the month of the first schedule
+                if (data.schedules && data.schedules.length > 0) {
+                    const sortedSchedules = [...data.schedules].sort((a, b) => a.date.localeCompare(b.date));
+                    const firstDate = new Date(sortedSchedules[0].date);
+                    setCurrentMonth({
+                        year: firstDate.getFullYear(),
+                        month: firstDate.getMonth() + 1
+                    });
+                }
+
                 setLoading(false)
             })
             .catch(err => {

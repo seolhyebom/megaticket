@@ -13,11 +13,26 @@ export function SeatLegend({ grades, hasOPSeats = true }: SeatLegendProps) {
         ? grades
         : grades.filter(g => g.grade !== 'OP');
 
+    // V7.16 Fix: Display OP seat first
+    const GRADE_PRIORITY: Record<string, number> = {
+        'OP': 0,
+        'VIP': 1,
+        'R': 2,
+        'S': 3,
+        'A': 4
+    };
+
+    const sortedGrades = [...displayGrades].sort((a, b) => {
+        const pA = GRADE_PRIORITY[a.grade] ?? 99;
+        const pB = GRADE_PRIORITY[b.grade] ?? 99;
+        return pA - pB;
+    });
+
     return (
         <div className="w-full border-t bg-white flex justify-center border-b">
             <div className="w-full max-w-full flex flex-nowrap items-center justify-center gap-6 p-4 px-8 text-sm whitespace-nowrap overflow-x-auto custom-scrollbar">
                 {/* Grades */}
-                {displayGrades.map((grade) => (
+                {sortedGrades.map((grade) => (
                     <div key={grade.grade} className="flex items-center gap-2">
                         <div
                             className="w-4 h-4 rounded-sm border-2"

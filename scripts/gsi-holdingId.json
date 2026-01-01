@@ -1,0 +1,16 @@
+[
+    {
+        "Create": {
+            "IndexName": "holdingId-index",
+            "KeySchema": [
+                {
+                    "AttributeName": "holdingId",
+                    "KeyType": "HASH"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            }
+        }
+    }
+]

@@ -102,13 +102,14 @@ const result = await dynamoDb.send(new QueryCommand({
     TableName: RESERVATIONS_TABLE,
     IndexName: 'userId-index',  // ← GSI 지정
     KeyConditionExpression: "userId = :uid",
-    FilterExpression: "#s = :c1 OR #s = :c2 OR #s = :c3",
+    FilterExpression: "#s = :c1 OR #s = :c2 OR #s = :c3 OR #s = :c4",  // V7.16: DR_RESERVED 추가
     ExpressionAttributeNames: { "#s": "status" },
     ExpressionAttributeValues: {
         ":uid": userId,
         ":c1": "CONFIRMED",
         ":c2": "CANCELLED",
-        ":c3": "DR_RECOVERED"
+        ":c3": "DR_RECOVERED",
+        ":c4": "DR_RESERVED"  // V7.16: DR 리전 신규 예약
     }
 }));
 ```

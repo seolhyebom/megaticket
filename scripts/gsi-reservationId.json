@@ -1,0 +1,16 @@
+[
+    {
+        "Create": {
+            "IndexName": "reservationId-index",
+            "KeySchema": [
+                {
+                    "AttributeName": "reservationId",
+                    "KeyType": "HASH"
+                }
+            ],
+            "Projection": {
+                "ProjectionType": "ALL"
+            }
+        }
+    }
+]

@@ -68,6 +68,7 @@ function SeatsContent() {
         const userId = user?.id || "guest-user-1"
 
         try {
+            // V7.20: venue, performanceTitle, posterUrl 파라미터 추가 (HOLDING에 비정규화 데이터 저장)
             const res = await fetch("/api/holdings", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -76,7 +77,10 @@ function SeatsContent() {
                     seats: selectedSeats,
                     userId: userId,
                     date,
-                    time
+                    time,
+                    venue: performance?.venue || '',
+                    performanceTitle: performanceTitle || '',
+                    posterUrl: (performance as any)?.posterUrl || (performance as any)?.poster || ''
                 })
             })
 

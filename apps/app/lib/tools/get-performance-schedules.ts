@@ -12,7 +12,7 @@ interface GetSchedulesParams {
 export async function getPerformanceSchedules(params: GetSchedulesParams) {
     // Use locally imported table name or fallback to environment (handled in dynamodb.ts)
     const TABLE_NAME = SCHEDULES_TABLE;
-    const INDEX_NAME = 'performanceId-datetime-index';
+    const INDEX_NAME = 'performanceId-index';
 
     const fromDate = params.fromDate || new Date().toISOString().split('T')[0];
     const limit = Math.min(params.limit || 5, 5); // [V7.9.3.2] Strictly cap at 5

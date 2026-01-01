@@ -4,15 +4,21 @@ import Link from "next/link"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Search, Menu, User, Ticket } from "lucide-react"
+import { Search, Menu, User, Ticket, AlertCircle } from "lucide-react"  // V7.16: AlertCircle 추가
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { useSearchParams } from "next/navigation"  // V7.18: URL 쿼리에서 region 가져오기
 
 export function SiteHeader() {
 
     const [isScrolled, setIsScrolled] = useState(false)
+    const [hasRecoveredReservation, setHasRecoveredReservation] = useState(false)  // V7.16: 복구 예약 여부
     const { user, logout } = useAuth()
+    const searchParams = useSearchParams()  // V7.18
+
+    // V7.18: URL 쿼리 > 환경변수 > 기본값 순으로 리전 결정
+    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2'
 
     useEffect(() => {
         const handleScroll = () => {
@@ -21,6 +27,36 @@ export function SiteHeader() {
         window.addEventListener("scroll", handleScroll)
         return () => window.removeEventListener("scroll", handleScroll)
     }, [])
+
+    // V7.16: 복구된 예약(DR_RECOVERED) 여부 확인
+    useEffect(() => {
+        const checkRecoveredReservations = async () => {
+            if (!user) {
+                setHasRecoveredReservation(false)
+                return
+            }
+            try {
+                console.log('[SiteHeader] Checking DR_RECOVERED reservations with region:', region);
+                const response = await fetch(`/api/reservations?region=${region}&userId=${encodeURIComponent(user.id)}`)
+                if (response.ok) {
+                    const data = await response.json()
+                    // API가 배열 자체를 반환하거나 { reservations: [] } 형태일 수 있음
+                    const reservations = Array.isArray(data) ? data : (data.reservations || [])
+                    const hasRecovered = reservations.some(
+                        (r: { status: string }) => r.status === 'DR_RECOVERED' || r.status === 'dr_recovered'
+                    )
+                    setHasRecoveredReservation(hasRecovered || false)
+                }
+            } catch (error) {
+                console.error('[SiteHeader] Failed to check recovered reservations:', error)
+            }
+        }
+        checkRecoveredReservations()
+        // 30초마다 확인 (DR_RECOVERED TTL이 15분이므로 적절한 간격)
+        const interval = setInterval(checkRecoveredReservations, 30000)
+        return () => clearInterval(interval)
+    }, [user, region])
+
 
     return (
         <header className={cn(
@@ -86,9 +122,18 @@ export function SiteHeader() {
                                     <span className="font-medium">로그아웃</span>
                                 </Button>
                                 <Link href="/my">
-                                    <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
+                                    <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent relative">
                                         <Ticket className="h-5 w-5" />
                                         <span className="font-medium">내 예약</span>
+                                        {/* V7.16: 복구 예약 알림 아이콘 */}
+                                        {hasRecoveredReservation && (
+                                            <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                                <span className="relative inline-flex rounded-full h-4 w-4 bg-amber-500 items-center justify-center">
+                                                    <AlertCircle className="h-3 w-3 text-white" />
+                                                </span>
+                                            </span>
+                                        )}
                                     </Button>
                                 </Link>
                             </>

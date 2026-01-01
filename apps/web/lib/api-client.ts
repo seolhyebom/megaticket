@@ -13,9 +13,7 @@ class ApiClient {
 
     async getPerformance(id: string): Promise<Performance> {
         const url = `${this.baseUrl}/api/performances/${id}`;
-        const res = await fetch(url, {
-            next: { revalidate: 3600 }
-        });
+        const res = await fetch(url, { next: { revalidate: 3600 } });
         if (!res.ok) {
             throw new Error(`Failed to fetch performance: ${res.status}`);
         }
@@ -24,7 +22,7 @@ class ApiClient {
 
     async getVenue(id: string): Promise<VenueData> {
         const url = `${this.baseUrl}/api/venues/${id}`;
-        const res = await fetch(url);
+        const res = await fetch(url, { next: { revalidate: 86400 } });
         if (!res.ok) {
             throw new Error(`Failed to fetch venue: ${res.status}`);
         }

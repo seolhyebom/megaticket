@@ -1,0 +1,6 @@
+[
+    {
+        "AttributeName": "reservationId",
+        "AttributeType": "S"
+    }
+]

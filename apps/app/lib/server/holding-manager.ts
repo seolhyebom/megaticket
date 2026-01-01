@@ -5,6 +5,16 @@ import { Seat, Holding, Reservation } from '@mega-ticket/shared-types';
 import { dynamoDb, RESERVATIONS_TABLE, VENUES_TABLE, createPK, createSK } from "../dynamodb";
 import { getPerformance } from './performance-service';
 
+// V7.19: DR 복구 시작 시간 (서버 프로세스 시작 시 한 번만 설정)
+// 이 값은 서버가 재시작될 때만 갱신되며, 새로고침으로는 변경되지 않음
+const DR_RECOVERY_START_TIMESTAMP: Date | null = process.env.DR_RECOVERY_MODE === 'true' && process.env.DR_RECOVERY_START_TIME
+    ? new Date(process.env.DR_RECOVERY_START_TIME)
+    : (process.env.DR_RECOVERY_MODE === 'true' ? new Date() : null);
+
+if (DR_RECOVERY_START_TIMESTAMP) {
+    console.log(`[DR] Recovery start time set to: ${DR_RECOVERY_START_TIMESTAMP.toISOString()}`);
+}
+
 /**
  * 2. Check if seats are available (DynamoDB Only)
  */
@@ -62,13 +72,17 @@ export async function areSeatsAvailable(performanceId: string, seatIds: string[]
 
 /**
  * 3. Create a new holding (DynamoDB Only)
+ * V7.20: venue, performanceTitle, posterUrl 파라미터 추가 (비정규화)
  */
 export async function createHolding(
     performanceId: string,
     seats: Seat[],
     userId: string,
     date: string,
-    time: string
+    time: string,
+    venue?: string,           // V7.18: 비정규화 필드
+    performanceTitle?: string, // V7.18: 비정규화 필드
+    posterUrl?: string        // V7.20: 비정규화 필드
 ): Promise<{ success: boolean; holdingId?: string; error?: string; expiresAt?: string; remainingSeconds?: number; unavailableSeats?: string[] }> {
 
     const pk = createPK(performanceId, date, time);
@@ -78,7 +92,13 @@ export async function createHolding(
     const expiresAt = new Date(now.getTime() + HOLDING_TTL_SECONDS * 1000).toISOString();
     const ttl = Math.floor(now.getTime() / 1000) + HOLDING_TTL_SECONDS;
 
-
+    // V7.18: sourceRegion 결정 및 디버그 로그
+    const sourceRegion = process.env.AWS_REGION || 'ap-northeast-2';
+    console.log('[HOLDING] Environment Debug:', {
+        AWS_REGION: process.env.AWS_REGION,
+        DR_RECOVERY_MODE: process.env.DR_RECOVERY_MODE,
+        sourceRegion: sourceRegion
+    });
 
     try {
         // [DEBUG] 호출 파라미터 로깅
@@ -88,7 +108,10 @@ export async function createHolding(
             time,
             pk,
             seatIds: seats.map(s => s.seatId),
-            userId
+            userId,
+            venue,
+            performanceTitle,
+            sourceRegion
         });
 
         // Check availability first
@@ -118,11 +141,15 @@ export async function createHolding(
                     grade: seat.grade,
                     price: seat.price,
                     performanceId,
+                    performanceTitle: performanceTitle || '',  // V7.18: 비정규화
+                    venue: venue || '',                        // V7.18: 비정규화
+                    posterUrl: posterUrl || '',                // V7.20: 비정규화
                     date,
                     time,
                     createdAt: now.toISOString(),
                     expiresAt: expiresAt,
-                    holdExpiresAt: ttl // DynamoDB TTL field
+                    holdExpiresAt: ttl, // DynamoDB TTL field
+                    sourceRegion: sourceRegion // V7.18: 환경변수에서 읽은 값 사용
                 },
                 ConditionExpression: "attribute_not_exists(PK) AND attribute_not_exists(SK)"
             }
@@ -141,6 +168,8 @@ export async function createHolding(
         return { success: false, error: "선점 처리 중 오류가 발생했습니다." };
     }
 }
+
+
 
 /**
  * 4. Get holding by ID (DynamoDB Only)
@@ -282,12 +311,14 @@ export async function confirmReservation(
             }
         }
 
-        // --- DR Grace Period Logic (V7.8) ---
+        // --- DR Status Logic (V7.16) ---
+        // DR_RESERVED: DR 리전에서 새로 예약한 건
+        // DR_RECOVERED: Main에서 HOLDING 중 장애 → DR에서 복구 (15분 유예)
         let finalStatus = "CONFIRMED";
         const isDRMode = process.env.DR_RECOVERY_MODE === 'true';
 
-        // [V7.9] If already recovered, skip check and proceed to CONFIRM
-        if (isDRMode && first.status !== 'DR_RECOVERED') {
+        // [V7.16] DR 모드에서의 상태 결정
+        if (isDRMode) {
             const recoveryStartTimeStr = process.env.DR_RECOVERY_START_TIME || nowISO;
             const recoveryStartTime = new Date(recoveryStartTimeStr);
             const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '15');
@@ -295,27 +326,53 @@ export async function confirmReservation(
 
             const holdingCreatedAt = new Date(first.createdAt);
 
-            // 만약 장애 복구 시작 전에 생성된 선점 데이터이고, 현재가 유예 기간 내라면
-            if (holdingCreatedAt < recoveryStartTime && now < gracePeriodLimit) {
-                finalStatus = "DR_RECOVERED";
+            // 이미 DR_RECOVERED 상태면 → DR_RESERVED로 최종 확정 (DR 리전 예약 구분)
+            if (first.status === 'DR_RECOVERED') {
+                finalStatus = "DR_RESERVED";  // V7.22: CONFIRMED → DR_RESERVED (Main/DR 리전 구분)
                 console.log(JSON.stringify({
-                    event: '[REALTIME] [RESERVATION] DR_GRACE_PERIOD_APPLIED',
+                    event: '[REALTIME] [RESERVATION] DR_RECOVERED_TO_DR_RESERVED',
+                    reservationId: reservationId,
+                    visitorId: first.userId,
+                    timestamp: nowISO
+                }));
+            }
+            // V7.21: Main에서 장애 전에 생성된 HOLDING → DR_RESERVED (유예 기간 내)
+            // (기존: CONFIRMED로 저장 → Main/DR 구분 불가)
+            else if (holdingCreatedAt < recoveryStartTime && now < gracePeriodLimit) {
+                finalStatus = "DR_RESERVED";  // V7.22: CONFIRMED → DR_RESERVED (Main/DR 리전 구분)
+                console.log(JSON.stringify({
+                    event: '[REALTIME] [RESERVATION] DR_HOLDING_TO_DR_RESERVED',
                     reservationId: reservationId,
                     visitorId: first.userId,
                     holdingCreatedAt: first.createdAt,
                     drRecoveryStartTime: recoveryStartTimeStr,
                     gracePeriodMinutes: gracePeriodMinutes,
+                    note: 'V7.22: DR_RESERVED (Main/DR 리전 구분)',
                     timestamp: nowISO
                 }));
-            } else if (holdingCreatedAt < recoveryStartTime && now >= gracePeriodLimit) {
-                // 유예 기간 초과 (로그만 기록)
+            }
+            // Main에서 장애 전에 생성됐지만 유예 기간 초과
+            else if (holdingCreatedAt < recoveryStartTime && now >= gracePeriodLimit) {
+                finalStatus = "DR_RESERVED";  // V7.22: 유예 기간 초과해도 DR에서 처리 → DR_RESERVED
                 console.log(JSON.stringify({
                     event: '[REALTIME] [RESERVATION] DR_GRACE_PERIOD_EXPIRED',
                     reservationId: reservationId,
                     visitorId: first.userId,
                     holdingCreatedAt: first.createdAt,
                     expiredAt: nowISO,
-                    reason: 'Grace period exceeded'
+                    reason: 'Grace period exceeded, but processed in DR → DR_RESERVED'
+                }));
+            }
+            // DR 리전에서 새로 생성된 HOLDING → DR_RESERVED (DR에서 새로 예약한 건)
+            else if (holdingCreatedAt >= recoveryStartTime) {
+                finalStatus = "DR_RESERVED";  // V7.21a: DR 리전에서 새로 예약한 건은 DR_RESERVED로 구분
+                console.log(JSON.stringify({
+                    event: '[REALTIME] [RESERVATION] DR_NEW_BOOKING_RESERVED',
+                    reservationId: reservationId,
+                    visitorId: first.userId,
+                    holdingCreatedAt: first.createdAt,
+                    drRecoveryStartTime: recoveryStartTimeStr,
+                    timestamp: nowISO
                 }));
             }
         }
@@ -330,8 +387,8 @@ export async function confirmReservation(
                 TableName: RESERVATIONS_TABLE,
                 Key: { PK: item.PK, SK: item.SK },
                 UpdateExpression: ttlValue
-                    ? "SET #s = :status, reservationId = :rid, performanceTitle = :title, venue = :venue, posterUrl = :poster, confirmedAt = :now, #ttl = :ttl REMOVE holdExpiresAt"
-                    : "SET #s = :status, reservationId = :rid, performanceTitle = :title, venue = :venue, posterUrl = :poster, confirmedAt = :now REMOVE holdExpiresAt, #ttl",
+                    ? "SET #s = :status, reservationId = :rid, performanceTitle = :title, venue = :venue, posterUrl = :poster, confirmedAt = :now, sourceRegion = :region, #ttl = :ttl REMOVE holdExpiresAt"
+                    : "SET #s = :status, reservationId = :rid, performanceTitle = :title, venue = :venue, posterUrl = :poster, confirmedAt = :now, sourceRegion = :region REMOVE holdExpiresAt, #ttl",
                 ExpressionAttributeNames: {
                     "#s": "status",
                     "#ttl": "ttl"
@@ -343,6 +400,7 @@ export async function confirmReservation(
                     ":venue": venue,
                     ":poster": finalPosterUrl || "",
                     ":now": nowISO,
+                    ":region": process.env.AWS_REGION || "ap-northeast-2",  // V7.19: 예약 확정 시 현재 리전으로 업데이트
                     ...(ttlValue ? { ":ttl": ttlValue } : {})
                 }
             }
@@ -430,9 +488,15 @@ export async function getSeatStatusMap(performanceId: string, date: string, time
         (resResult.Items || []).forEach(item => {
             const seatId = item.SK.replace('SEAT#', '');
             console.log(`[getSeatStatusMap] Item: seatId=${seatId}, status=${item.status}`);
-            if (item.status === 'CONFIRMED' || item.status === 'DR_RECOVERED') {
+            // V7.22: CONFIRMED, DR_RESERVED는 예약 완료 → reserved (회색 X)
+            if (item.status === 'CONFIRMED' || item.status === 'DR_RESERVED') {
                 statusMap[seatId] = 'reserved';
-            } else if (item.status === 'HOLDING') {
+            }
+            // V7.22: DR_RECOVERED는 결제 대기 상태 → holding (노란색)
+            else if (item.status === 'DR_RECOVERED') {
+                statusMap[seatId] = 'holding';
+            }
+            else if (item.status === 'HOLDING') {
                 // [V7.10.3] 만료된 HOLDING은 available로 처리
                 const expiresAt = item.expiresAt;
                 if (expiresAt && expiresAt < now) {
@@ -456,44 +520,119 @@ export async function getSeatStatusMap(performanceId: string, date: string, time
  */
 export async function getUserReservations(userId: string): Promise<Reservation[]> {
     try {
+        // V7.19: DR 모드 확인
+        const isDRMode = process.env.DR_RECOVERY_MODE === 'true';
+
         // V7.15: GSI userId-index 사용하여 Query (Scan 대비 99% RCU 절감)
+        // V7.19: DR 모드에서는 HOLDING 상태도 조회 (DR_RECOVERED로 변환)
         const result = await dynamoDb.send(new QueryCommand({
             TableName: RESERVATIONS_TABLE,
             IndexName: 'userId-index',
             KeyConditionExpression: "userId = :uid",
-            FilterExpression: "#s = :c1 OR #s = :c2 OR #s = :c3",
+            FilterExpression: isDRMode
+                ? "#s = :c1 OR #s = :c2 OR #s = :c3 OR #s = :c4 OR #s = :c5"  // HOLDING 포함
+                : "#s = :c1 OR #s = :c2 OR #s = :c3 OR #s = :c4",
             ExpressionAttributeNames: { "#s": "status" },
             ExpressionAttributeValues: {
                 ":uid": userId,
                 ":c1": "CONFIRMED",
                 ":c2": "DR_RECOVERED",
-                ":c3": "CANCELLED"  // V7.14: 취소된 예약도 포함
+                ":c3": "CANCELLED",  // V7.14: 취소된 예약도 포함
+                ":c4": "DR_RESERVED",  // V7.16: DR 리전에서 새 예약
+                ...(isDRMode ? { ":c5": "HOLDING" } : {})  // V7.19: DR 모드에서 HOLDING 조회
             }
         }));
 
         const items = result.Items || [];
         const reservationsMap: Record<string, Reservation> = {};
 
-        items.forEach((item: any) => {
-            const rid = item.reservationId;
-            if (!rid) return;
+        // V7.19: DR 모드에서 15분 유예 기간 계산용
+        const now = new Date();
+        const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '15');
+
+        for (const item of items) {
+            // V7.19: HOLDING은 reservationId 대신 holdingId 사용
+            const rid = item.reservationId || item.holdingId;
+            if (!rid) continue;
+
+            // V7.19: DR 모드에서 HOLDING은 원본 만료 시간 무시하고 복구 대상으로 처리
+            // (원본 60초 TTL이 지나도 15분 유예 기간 부여)
 
             if (!reservationsMap[rid]) {
+                // V7.19: HOLDING을 DR_RECOVERED로 변환할 때 15분 만료 시간 계산
+                let displayStatus: string;
+                let displayExpiresAt = item.expiresAt;
+
+                // V7.19: HOLDING은 performanceTitle, venue, posterUrl이 비어있을 수 있음
+                // -> performanceId로 공연 정보 조회 필요 (아래에서 처리)
+                let perfTitle = item.performanceTitle || "";
+                let perfVenue = item.venue || "";
+                let perfPosterUrl = item.posterUrl || "";
+
+                if (item.status === 'HOLDING' && isDRMode) {
+                    // V7.21: sourceRegion으로 복구 대상 여부 판단
+                    const currentRegion = process.env.AWS_REGION || 'ap-northeast-2';
+                    const isFromMainRegion = item.sourceRegion !== currentRegion;
+
+                    if (isFromMainRegion) {
+                        // 메인 리전(Seoul)에서 생성된 HOLDING → 복구 대상
+                        displayStatus = 'dr_recovered';
+                        // V7.19: DR 서버 시작 시점(모듈 레벨 상수) 기준으로 15분 유예
+                        const drRecoveryStartTime = DR_RECOVERY_START_TIMESTAMP || now;
+                        displayExpiresAt = new Date(drRecoveryStartTime.getTime() + gracePeriodMinutes * 60 * 1000).toISOString();
+
+                        console.log(`[DR] HOLDING→DR_RECOVERED: holdingId=${rid}, sourceRegion=${item.sourceRegion}, currentRegion=${currentRegion}, expiresAt=${displayExpiresAt}`);
+
+                        // V7.20: HOLDING의 메타데이터가 비어있으면 공연 정보 조회 (posterUrl 포함)
+                        if (!perfTitle || !perfVenue || !perfPosterUrl) {
+                            try {
+                                const perf = await getPerformance(item.performanceId);
+                                if (perf) {
+                                    perfTitle = perfTitle || perf.title || "알 수 없는 공연";
+                                    perfVenue = perfVenue || (perf.venue as any)?.name || perf.venue || "알 수 없는 장소";
+                                    perfPosterUrl = perfPosterUrl || perf.posterUrl || perf.poster || "";
+                                }
+                            } catch (e) {
+                                console.warn('[getUserReservations] Failed to fetch performance info:', e);
+                            }
+                        }
+                    } else {
+                        // V7.21: DR 리전(Tokyo)에서 새로 생성된 HOLDING → 정상 HOLDING
+                        // 원래 expiresAt 유지 (60초 TTL), "내 예약" 페이지에서는 표시하지 않음 (결제 페이지에서만 처리)
+                        console.log(`[DR] HOLDING (local): holdingId=${rid}, sourceRegion=${item.sourceRegion}, skip display`);
+                        continue;  // DR 리전에서 새로 생성된 HOLDING은 "내 예약" 목록에서 제외
+                    }
+                } else if (item.status === 'HOLDING' && !isDRMode) {
+                    // 정상 모드에서 HOLDING은 "내 예약" 목록에서 제외 (결제 페이지에서만 처리)
+                    continue;
+                } else {
+                    displayStatus = (() => {
+                        switch (item.status) {
+                            case 'CANCELLED': return 'cancelled';
+                            case 'DR_RECOVERED': return 'dr_recovered';
+                            case 'DR_RESERVED': return 'dr_reserved';
+                            default: return 'confirmed';
+                        }
+                    })();
+                }
+
                 reservationsMap[rid] = {
                     id: rid,
+                    holdingId: item.holdingId,  // V7.19: holdingId도 포함
                     userId: item.userId,
                     performanceId: item.performanceId,
-                    performanceTitle: item.performanceTitle || "알 수 없는 공연",
-                    venue: item.venue || "알 수 없는 장소",
-                    posterUrl: item.posterUrl || "",
+                    performanceTitle: perfTitle || "알 수 없는 공연",
+                    venue: perfVenue || "알 수 없는 장소",
+                    posterUrl: perfPosterUrl,
                     date: item.date,
                     time: item.time,
                     seats: [],
                     totalPrice: 0,
-                    // V7.14: 프론트엔드와 일관성을 위해 소문자로 변환
-                    status: (item.status === 'CANCELLED' ? 'cancelled' : 'confirmed') as any,
-                    createdAt: item.confirmedAt || item.createdAt
-                };
+                    status: displayStatus as any,
+                    expiresAt: displayExpiresAt,
+                    createdAt: item.confirmedAt || item.createdAt,
+                    sections: []  // V7.22: 연속 번호 계산용 - 아래 루프 후 추가
+                } as any;
             }
             reservationsMap[rid].seats.push({
                 seatId: item.seatId,
@@ -504,9 +643,36 @@ export async function getUserReservations(userId: string): Promise<Reservation[]
                 status: 'reserved'
             });
             reservationsMap[rid].totalPrice += (item.price || 0);
+        }
+
+        // V7.19: 만료된 DR_RECOVERED 필터링 (15분 초과 시 목록에서 제외)
+        const filteredReservations = Object.values(reservationsMap).filter(r => {
+            if (r.status === 'dr_recovered' && r.expiresAt) {
+                const isNotExpired = new Date(r.expiresAt) > now;
+                console.log(`[DR] Filter check: id=${r.id}, expiresAt=${r.expiresAt}, now=${now.toISOString()}, isNotExpired=${isNotExpired}`);
+                return isNotExpired;  // 만료 안 된 것만 표시
+            }
+            return true;
         });
 
-        return Object.values(reservationsMap).sort((a, b) =>
+        // V7.22: sections 데이터 추가 (연속 좌석 번호 계산용)
+        // performanceId별로 한 번만 조회하여 캐싱
+        const sectionsByPerfId: Record<string, any[]> = {};
+        for (const reservation of filteredReservations) {
+            const perfId = reservation.performanceId;
+            if (!sectionsByPerfId[perfId]) {
+                try {
+                    const perf = await getPerformance(perfId);
+                    sectionsByPerfId[perfId] = perf?.sections || [];
+                } catch (e) {
+                    console.warn(`[getUserReservations] Failed to fetch sections for ${perfId}:`, e);
+                    sectionsByPerfId[perfId] = [];
+                }
+            }
+            (reservation as any).sections = sectionsByPerfId[perfId];
+        }
+
+        return filteredReservations.sort((a, b) =>
             new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
 

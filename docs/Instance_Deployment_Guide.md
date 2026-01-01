@@ -18,11 +18,16 @@ Docker를 사용하지 않고, AWS EC2 등 일반적인 리눅스 인스턴스�
 
 ---
 
-## 1. 사전 준비: Node.js 설치 (NVM 사용)
+
+
+## 1-1. 사전 준비: Node.js 설치 (NVM 사용)
 
 Node.js가 설치되어 있지 않은 경우, 가장 안정적인 **NVM (Node Version Manager)** 을 통해 설치합니다. (권장 버전: v24.12.0)
 
 ```bash
+# 0. 깃 설치 명령어(Amazon Linux 2023)
+sudo dnf install git -y
+
 # 1. NVM 설치 스크립트 실행
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 
@@ -36,6 +41,17 @@ nvm install 24.12.0
 node -v
 npm -v
 ```
+
+
+## 1-2. PM2 설치
+```
+# 1. PM2 전역 설치
+npm install -g pm2
+
+# 2. PM2 설치 확인
+pm2 --version
+```
+
 
 ---
 
@@ -65,10 +81,7 @@ npm install
 
 ### A. Web 인스턴스 (Frontend) - Port 3000
 ```bash
-# 1. Web 폴더로 이동 (또는 이미 있다면 생략)
-cd ~/megaticket/apps/web
-
-# 2. 환경변수 설정
+# 1. 환경변수 설정
 export AWS_REGION=ap-northeast-2
 
 # ★ App 인스턴스 API 연결을 위한 환경변수 (필수!)
@@ -76,18 +89,21 @@ export AWS_REGION=ap-northeast-2
 # export INTERNAL_API_URL=http://<App_Private_IP>:3001
 
 # [프로덕션 환경] Route 53 + ALB + Auto Scaling - 도메인 사용
-# export INTERNAL_API_URL=https://pilotlight-test.click
+export INTERNAL_API_URL=https://pilotlight-test.click
 
 # 영구 설정 (재접속 시에도 유지)
+echo 'export AWS_REGION=ap-northeast-2' >> ~/.bashrc
 echo 'export INTERNAL_API_URL=https://pilotlight-test.click' >> ~/.bashrc
 
-# 3. 빌드
-npm run build
+# 2. 빌드 (★ 반드시 루트에서 turbo로 빌드!)
+cd ~/megaticket
+npm run build:web
 
-# 4. 실행 (PM2)
+# 3. 실행 (PM2)
+cd ~/megaticket/apps/web
 pm2 start npm --name "web-frontend" -- start
 
-# 5. 재부팅 대비 저장 (필수)
+# 4. 재부팅 대비 저장 (필수)
 pm2 save
 pm2 startup
 ```
@@ -96,10 +112,7 @@ pm2 startup
 
 ### B. App 인스턴스 (Backend) - Port 3001
 ```bash
-# 1. App 폴더로 이동
-cd ~/megaticket/apps/app
-
-# 2. 환경변수 설정 (서울 리전 기본값)
+# 1. 환경변수 설정 (서울 리전 기본값)
 export AWS_REGION=ap-northeast-2
 
 # 영구 설정 (재접속 시에도 유지)
@@ -110,13 +123,15 @@ echo 'export AWS_REGION=ap-northeast-2' >> ~/.bashrc
 # echo 'export AWS_REGION=ap-northeast-1' >> ~/.bashrc
 # export DR_RECOVERY_MODE=true
 
-# 3. 빌드
-npm run build
+# 2. 빌드 (★ 반드시 루트에서 turbo로 빌드!)
+cd ~/megaticket
+npm run build:app
 
-# 4. 실행 (PM2)
+# 3. 실행 (PM2)
+cd ~/megaticket/apps/app
 pm2 start npm --name "app-backend" -- start
 
-# 5. 재부팅 대비 저장 (필수)
+# 4. 재부팅 대비 저장 (필수)
 pm2 save
 pm2 startup
 # (주의: 출력된 sudo env 명령어를 복사할 때, 끝부분 '--hp'와 '/home' 사이에 띄어쓰기가 있는지 꼭 확인하세요!)
@@ -179,9 +194,9 @@ pm2 delete web-frontend
 
 이미 PM2로 서버가 실행 중인 상태에서 **코드 업데이트** 등을 할 때 사용하는 명령어입니다.
 
-### B. 코드를 수정했거나 최신 코드를 받은 경우 (`git pull`)
+### A. 코드를 수정했거나 최신 코드를 받은 경우 (`git pull`)
 코드가 바뀌었으므로 **반드시 빌드**를 새로 해야 반영됩니다.
-Monorepo 구조이므로 **루트 폴더**에서 의존성을 설치하는 것이 가장 안전합니다.
+Monorepo 구조이므로 **루트 폴더**에서 turbo를 사용하여 빌드합니다.
 
 ```bash
 # 0. 접속 후 필수 실행
@@ -193,14 +208,12 @@ source ~/.bashrc
 git pull
 npm install
 
-# 2. Web 업데이트 및 빌드
-cd apps/web
-npm run build      # (★필수)
+# 2. Web 업데이트 및 빌드 (★ 루트에서 turbo 빌드!)
+npm run build:web
 pm2 restart web-frontend
 
-# 3. App 업데이트 및 빌드
-cd ~/megaticket/apps/app   # (경로 이동 주의)
-npm run build      # (★필수)
+# 3. App 업데이트 및 빌드 (★ 루트에서 turbo 빌드!)
+npm run build:app
 pm2 restart app-backend
 ```
 

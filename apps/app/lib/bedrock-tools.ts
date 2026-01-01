@@ -871,7 +871,11 @@ export async function executeTool(toolName: string, input: ToolInput): Promise<a
                 // [Robustness] Wait briefly to ensure file system sync and state propagation
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                const result = await createHolding(performanceId, seatObjects, targetUserId, date, time);
+                // V7.20: venue, performanceTitle, posterUrl 파라미터 추가 (HOLDING에 비정규화 데이터 저장)
+                const venue = perf?.venue || '';
+                const performanceTitle = perf?.title || '';
+                const posterUrl = (perf as any)?.posterUrl || (perf as any)?.poster || '';
+                const result = await createHolding(performanceId, seatObjects, targetUserId, date, time, venue, performanceTitle, posterUrl);
 
                 if (!result.success) {
                     console.log('[HOLDING] Failed:', { error: result.error, unavailable: result.unavailableSeats });

@@ -282,7 +282,7 @@ export async function getPerformanceSchedules(performanceId: string): Promise<Sc
     try {
         const result = await dynamoDb.send(new QueryCommand({
             TableName: SCHEDULES_TABLE,
-            IndexName: "performanceId-datetime-index",
+            IndexName: "performanceId-index",
             KeyConditionExpression: "performanceId = :pid",
             ExpressionAttributeValues: { ":pid": performanceId }
         }));

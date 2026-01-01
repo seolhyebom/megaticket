@@ -18,9 +18,10 @@
         "test-chatbot": "node diagnose_v7_9.js"
     },
     "devDependencies": {
+        "@aws-sdk/credential-providers": "^3.958.0",
+        "prettier": "^3.1.0",
         "turbo": "^2.3.3",
-        "typescript": "^5.3.0",
-        "prettier": "^3.1.0"
+        "typescript": "^5.3.0"
     },
     "packageManager": "npm@10.2.5"
 }
