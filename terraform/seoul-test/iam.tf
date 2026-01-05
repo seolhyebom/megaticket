@@ -35,7 +35,7 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 # -----------------------------------------------------------------------------
-# Bedrock 액세스 정책 (인라인)
+# Bedrock 액세스 정책 (인라인) - Converse API + Cross-Region Inference
 # -----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "bedrock_policy" {
   name = "${var.project_name}-Bedrock-Policy"
@@ -45,15 +45,20 @@ resource "aws_iam_role_policy" "bedrock_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "BedrockInvoke"
+        Sid    = "BedrockInvokeAndConverse"
         Effect = "Allow"
         Action = [
           "bedrock:InvokeModel",
-          "bedrock:InvokeModelWithResponseStream"
+          "bedrock:InvokeModelWithResponseStream",
+          "bedrock:Converse",
+          "bedrock:ConverseStream"
         ]
         Resource = [
+          # Foundation Models (Direct)
           "arn:aws:bedrock:*::foundation-model/anthropic.*",
-          "arn:aws:bedrock:*::foundation-model/amazon.*"
+          "arn:aws:bedrock:*::foundation-model/amazon.*",
+          # Cross-Region Inference Profiles (global., apac. prefixes)
+          "arn:aws:bedrock:*:*:inference-profile/*"
         ]
       }
     ]
