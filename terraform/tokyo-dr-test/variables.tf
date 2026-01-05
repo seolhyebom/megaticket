@@ -39,27 +39,27 @@ variable "vpc_cidr" {
 }
 
 variable "public_subnet_a_cidr" {
-  description = "Public Subnet A CIDR"
+  description = "Public Subnet A CIDR (ALB, NAT용 - 작게)"
   type        = string
-  default     = "10.1.1.0/24"
+  default     = "10.1.0.0/26"  # 64 IPs
 }
 
 variable "public_subnet_c_cidr" {
-  description = "Public Subnet C CIDR"
+  description = "Public Subnet C CIDR (ALB, NAT용 - 작게)"
   type        = string
-  default     = "10.1.2.0/24"
+  default     = "10.1.0.64/26"  # 64 IPs
 }
 
 variable "private_subnet_a_cidr" {
-  description = "Private Subnet A CIDR"
+  description = "Private Subnet A CIDR (EC2용 - 크게)"
   type        = string
-  default     = "10.1.10.0/24"
+  default     = "10.1.16.0/20"  # 4096 IPs
 }
 
 variable "private_subnet_c_cidr" {
-  description = "Private Subnet C CIDR"
+  description = "Private Subnet C CIDR (EC2용 - 크게)"
   type        = string
-  default     = "10.1.11.0/24"
+  default     = "10.1.32.0/20"  # 4096 IPs
 }
 
 # -----------------------------------------------------------------------------
@@ -99,9 +99,9 @@ variable "web_asg_min" {
 }
 
 variable "web_asg_max" {
-  description = "Web ASG 최대 인스턴스"
+  description = "Web ASG 최대 인스턴스 (테스트용)"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "web_asg_desired" {
@@ -117,9 +117,9 @@ variable "app_asg_min" {
 }
 
 variable "app_asg_max" {
-  description = "App ASG 최대 인스턴스"
+  description = "App ASG 최대 인스턴스 (테스트용)"
   type        = number
-  default     = 3
+  default     = 1
 }
 
 variable "app_asg_desired" {

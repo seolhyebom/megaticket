@@ -440,10 +440,11 @@
 | `name` | S | `샤롯데씨어터` | 공연장 이름 |
 | `address` | S | `서울 송파구 올림픽로 240` | 주소 |
 | `venueType` | S | `theater` | 공연장 유형 |
-| `totalSeats` | N | `1385` | 총 좌석 수 |
-| `floor1Seats` | N | `960` | 1층 좌석 수 |
-| `floor2Seats` | N | `425` | 2층 좌석 수 |
+| `totalSeats` | N | `1210` | 총 좌석 수 |
+| `floor1Seats` | N | `690` | 1층 좌석 수 |
+| `floor2Seats` | N | `520` | 2층 좌석 수 |
 | `sections` | L (List) | (아래 참조) | 구역별 좌석 배치 |
+| `sectionConfig` | M (Map) | (아래 참조) | **좌석 추천 스코어링 설정 (SSOT)** (V8.21) |
 
 ### sections 필드 구조 (DB 실제 데이터)
 
@@ -628,7 +629,7 @@ const retentionDays = parseInt(process.env.CANCELLED_RETENTION_DAYS || '7');
 const ttl = Math.floor(now.getTime() / 1000) + (retentionDays * 86400);
 
 // DR_RECOVERED (15분)
-const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '15');
+const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '30');
 const ttl = Math.floor(now.getTime() / 1000) + (gracePeriodMinutes * 60);
 ```
 
@@ -684,7 +685,7 @@ CACHE_TTL_MS=604800000   # 7일 = 604,800,000ms
 # ═══════════════════════════════════════════════════════════════
 DR_RECOVERY_MODE=false              # 장애 복구 모드 활성화 여부
 DR_RECOVERY_START_TIME=             # 복구 시작 시간 (ISO 8601)
-DR_GRACE_PERIOD_MINUTES=15          # 복구 유예 기간 (기본 15분)
+DR_GRACE_PERIOD_MINUTES=30          # 복구 유예 기간 (기본 30분)
 ```
 
 ---
@@ -900,7 +901,7 @@ DR 리전 신규 예약 (도쿄):
 |---------|------|-------|
 | `DR_RECOVERY_MODE` | DR 복구 모드 활성화 | `true` |
 | `DR_RECOVERY_START_TIME` | 장애 발생 시점 (ISO 8601) | `2025-12-29T13:00:00Z` |
-| `DR_GRACE_PERIOD_MINUTES` | 복구 유예 기간 (분) | `15` |
+| `DR_GRACE_PERIOD_MINUTES` | 복구 유예 기간 (분) | `30` |
 
 > 📝 **구분 로직 (V7.22)**:
 > - Main(서울)에서 결제 완료 → `CONFIRMED`
@@ -1569,3 +1570,41 @@ node scripts/migrate-performances-status.mjs --rollback --execute
 ```bash
 node scripts/migrate-performances-status.mjs --rollback --execute
 ```
+
+### sectionConfig 필드 구조 (V8.21 추가)
+
+>  **목적**: AI 좌석 추천 알고리즘을 위한 **Score Configuration Metadata**.
+> 코드에 하드코딩된 로직을 DB로 이관하여, 공연장별/구역별 명당 기준을 동적으로 관리함.
+
+```json
+{
+  "sectionConfig": {
+    "1층": {
+      "A": { "min": 1, "max": 12, "centerType": "high" },
+      "B": {
+        "min": 13, "max": 26,
+        "centerType": "middle",
+        "idealCenter": 19.5,
+        "idealRange": { "start": 18, "end": 21 },
+        "specialRows": {
+          "OP": {
+            "min": 1, "max": 12,
+            "centerType": "middle",
+            "idealCenter": 6.5,
+            "idealRange": { "start": 5, "end": 8 }
+          }
+        }
+      },
+      "C": { "min": 27, "max": 38, "centerType": "low" }
+    },
+    "2층": { ... }
+  }
+}
+```
+
+| 필드 | 설명 |
+|-----|-----|
+| `centerType` | 명당 위치 기준 (`high`: 번호 클수록, `low`: 작을수록, `middle`: 중간일수록) |
+| `idealCenter` | `middle` 타입일 때 정확한 이상적 중앙 번호 (예: 19.5) |
+| `idealRange` | `middle` 타입일 때 최고점수를 부여할 번호 범위 (예: 18~21번) |
+| `specialRows` | 특정 열(예: OP석)에만 적용되는 예외 설정 |

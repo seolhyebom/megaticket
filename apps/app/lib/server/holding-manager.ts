@@ -394,7 +394,7 @@ export async function confirmReservation(
         if (isDRMode) {
             const recoveryStartTimeStr = process.env.DR_RECOVERY_START_TIME || nowISO;
             const recoveryStartTime = new Date(recoveryStartTimeStr);
-            const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '15');
+            const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '30');
             const gracePeriodLimit = new Date(recoveryStartTime.getTime() + gracePeriodMinutes * 60 * 1000);
 
             const holdingCreatedAt = new Date(first.createdAt);
@@ -699,7 +699,7 @@ export async function getUserReservations(userId: string): Promise<Reservation[]
 
         // V7.19: DR 모드에서 15분 유예 기간 계산용
         const now = new Date();
-        const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '15');
+        const gracePeriodMinutes = parseInt(process.env.DR_GRACE_PERIOD_MINUTES || '30');
 
         for (const item of items) {
             // V7.19: HOLDING은 reservationId 대신 holdingId 사용

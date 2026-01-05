@@ -23,7 +23,7 @@
 export AWS_REGION=ap-northeast-2
 export DR_RECOVERY_MODE=false
 export DR_RECOVERY_START_TIME=
-export DR_GRACE_PERIOD_MINUTES=15
+export DR_GRACE_PERIOD_MINUTES=30
 ```
 
 ### 2. 도쿄 리전 (DR - 장애 복구 모드)
@@ -35,7 +35,7 @@ export DR_GRACE_PERIOD_MINUTES=15
 export AWS_REGION=ap-northeast-1
 export DR_RECOVERY_MODE=true
 export DR_RECOVERY_START_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")  # 현재 시간
-export DR_GRACE_PERIOD_MINUTES=15
+export DR_GRACE_PERIOD_MINUTES=30
 ```
 
 > 💡 **PowerShell**에서는:
@@ -79,7 +79,7 @@ $env:AWS_REGION="ap-northeast-2"; $env:DR_RECOVERY_MODE="false"; $env:DR_RECOVER
 
 ```powershell
 # 도쿄 DR 모드로 서버 시작
-$env:AWS_REGION="ap-northeast-1"; $env:DR_RECOVERY_MODE="true"; $env:DR_RECOVERY_START_TIME=(Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); $env:DR_GRACE_PERIOD_MINUTES="15"; npm run clean; npm install; npm run dev
+$env:AWS_REGION="ap-northeast-1"; $env:DR_RECOVERY_MODE="true"; $env:DR_RECOVERY_START_TIME=(Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); $env:DR_GRACE_PERIOD_MINUTES="30"; npm run clean; npm install; npm run dev
 ```
 
 ---
@@ -110,7 +110,7 @@ $env:AWS_REGION="ap-northeast-1"; $env:DR_RECOVERY_MODE="true"; $env:DR_RECOVERY
 **STEP 1️⃣ 도쿄 DR 모드로 서버 시작**
 
 ```powershell
-$env:AWS_REGION="ap-northeast-1"; $env:DR_RECOVERY_MODE="true"; $env:DR_RECOVERY_START_TIME=(Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); $env:DR_GRACE_PERIOD_MINUTES="15"; npm run clean; npm install; npm run dev
+$env:AWS_REGION="ap-northeast-1"; $env:DR_RECOVERY_MODE="true"; $env:DR_RECOVERY_START_TIME=(Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ"); $env:DR_GRACE_PERIOD_MINUTES="30"; npm run clean; npm install; npm run dev
 ```
 
 ---

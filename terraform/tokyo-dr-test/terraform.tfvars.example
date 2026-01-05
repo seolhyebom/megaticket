@@ -9,12 +9,12 @@ environment  = "test"
 aws_region   = "ap-northeast-1"  # 도쿄 리전
 aws_profile  = "default"
 
-# VPC CIDR (서울과 다른 CIDR)
+# VPC CIDR (서울과 다른 CIDR, 서브넷 크기는 동일)
 vpc_cidr              = "10.1.0.0/16"
-public_subnet_a_cidr  = "10.1.1.0/24"
-public_subnet_c_cidr  = "10.1.2.0/24"
-private_subnet_a_cidr = "10.1.10.0/24"
-private_subnet_c_cidr = "10.1.11.0/24"
+public_subnet_a_cidr  = "10.1.0.0/26"    # 64 IPs
+public_subnet_c_cidr  = "10.1.0.64/26"   # 64 IPs
+private_subnet_a_cidr = "10.1.16.0/20"   # 4096 IPs
+private_subnet_c_cidr = "10.1.32.0/20"   # 4096 IPs
 
 # EC2 설정 (도쿄 리전)
 key_pair_name = "seungwan_tokyo"
@@ -27,11 +27,11 @@ app_ami_id = "ami-yyyyyyyyyyyyyyyyy"  # 도쿄에 복사된 App AMI
 
 # Auto Scaling (테스트용 - 각 1개)
 web_asg_min     = 1
-web_asg_max     = 3
+web_asg_max     = 1
 web_asg_desired = 1
 
 app_asg_min     = 1
-app_asg_max     = 3
+app_asg_max     = 1
 app_asg_desired = 1
 
 # DynamoDB (참조용 - Global Table은 서울에서 관리)

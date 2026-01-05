@@ -1,7 +1,7 @@
 # DR 테스트용 Terraform 실행 가이드
 
-> **Version**: 1.1  
-> **Last Updated**: 2026-01-02  
+> **Version**: 1.2  
+> **Last Updated**: 2026-01-05  
 > **작성자**: 설혜봄 (MSP-Project-Pilot-Light)
 
 ---
@@ -13,14 +13,15 @@
 | 항목 | 서울 (seoul-test) | 도쿄 (tokyo-dr-test) |
 |------|-------------------|----------------------|
 | **VPC CIDR** | 10.100.0.0/16 | 10.1.0.0/16 |
+| **Public Subnet** | /26 (64 IPs) | /26 (64 IPs) |
+| **Private Subnet** | /20 (4096 IPs) | /20 (4096 IPs) |
 | **AWS Profile** | default | default |
 | **인스턴스 타입** | t2.medium | t2.medium |
 | **AMI** | Amazon Linux 2023 | GoldenAMI (서울에서 복사) |
 | **인스턴스 수** | Web 1, App 1 | Web 1, App 1 |
-| **Subnet** | Private (크게 /20) | Private |
-| **ALB** | ✅ | ✅ |
+| **ALB** | ✅ (HTTPS) | ✅ (HTTP) |
 | **NLB** | ✅ | ✅ |
-| **Auto Scaling** | desired=1 | desired=1 |
+| **Auto Scaling** | min=1, max=1, desired=1 | min=1, max=1, desired=1 |
 | **VPC Endpoint** | DynamoDB (Gateway) | DynamoDB (Gateway) |
 
 ---
