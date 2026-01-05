@@ -29,20 +29,19 @@ resource "aws_launch_template" "web" {
     exec > >(tee /var/log/user-data.log) 2>&1
     echo "=== DR Web User Data Started: $(date) ==="
     
-    # 환경변수 파일 생성
-    cat > /home/ec2-user/megaticket/apps/web/.env.local << 'ENVEOF'
-    AWS_REGION=${var.aws_region}
-    NEXT_PUBLIC_AWS_REGION=${var.aws_region}
-    INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001
-    ENVEOF
+    # 환경변수 파일 생성 (export 형식)
+    cat > /home/ec2-user/dr-web-env.sh << 'ENVEOF'
+    export AWS_REGION=${var.aws_region}
+    export NEXT_PUBLIC_AWS_REGION=${var.aws_region}
+    export INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001
+ENVEOF
     
+    chown ec2-user:ec2-user /home/ec2-user/dr-web-env.sh
     
-    # PM2 restart with explicit environment variables (No Rebuild needed)
-    echo "=== Restarting Web Service with Explicit Env Vars ==="
-    # 1. 기존 프로세스 삭제 (환경변수 클린 적용)
+    # PM2 restart with environment from file
     sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 delete web-frontend || true'
-    # 2. 환경변수와 함께 시작 (Runtime override - API 및 Next.js Runtime Config에 적용됨)
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && AWS_REGION=${var.aws_region} INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001 pm2 start npm --name \"web-frontend\" -- start"
+    sudo -u ec2-user bash -c "source /home/ec2-user/dr-web-env.sh && source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && pm2 start npm --name 'web-frontend' -- start"
+    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 save'
     
     echo "=== DR Web User Data Completed: $(date) ==="
   EOF

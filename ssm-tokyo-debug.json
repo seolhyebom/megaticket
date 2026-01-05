@@ -1,0 +1,12 @@
+{
+    "commands": [
+        "echo '=== ENV VARS ==='",
+        "cat /home/ec2-user/dr-env.sh",
+        "echo '=== PM2 STATUS ==='",
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 list'",
+        "echo '=== PM2 APP ENV ==='",
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 env app-backend | grep DYNAMODB'",
+        "echo '=== APP LOGS ==='",
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 logs app-backend --lines 50 --nostream'"
+    ]
+}
