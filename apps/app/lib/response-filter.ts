@@ -29,6 +29,11 @@ export function filterInternalData(response: string): string {
     const internalJsonPattern = /\{\s*"(?:performanceId|scheduleId|preferredGrade|groupSize|seatIds|holdId|userId)"[\s\S]*?\}/g;
     filtered = filtered.replace(internalJsonPattern, '');
 
+    // [V8.28 Fix] AI가 생성한 ACTION_DATA 태그 제거 (백엔드 강제 주입과 충돌 방지)
+    // AI가 어설프게 생성하거나 중복 생성하여 프론트엔드 파싱을 방해하는 것을 방지
+    filtered = filtered.replace(/\[\[ACTION_DATA\]\][\s\S]*?\[\[\/ACTION_DATA\]\]/g, '');
+    filtered = filtered.replace(/<!--\s*ACTION_DATA:[\s\S]*?-->/g, '');
+
     // 5. 연속 줄바꿈 정리 (3개 이상 → 2개)
     filtered = filtered.replace(/\n{3,}/g, '\n\n');
 
