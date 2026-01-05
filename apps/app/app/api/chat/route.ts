@@ -326,7 +326,20 @@ async function processConverseStream(
                     console.log('[FORCE_INJECT] AI outputted ACTION_DATA, but replacing with tool result for consistency.');
                 }
                 console.log('[FORCE_INJECT] ✅ Injecting ACTION_DATA (holdingSuccess=true, depth=' + depth + ')');
-                controller.enqueue(new TextEncoder().encode('\n\n' + pendingActionData));
+
+                // [V8.30] 텍스트 링크 강제 주입 (AI가 생략할 경우 대비)
+                let injectionContent = '\n\n' + pendingActionData;
+                const urlMatch = pendingActionData.match(/"url":\s*"([^"]+reservation\/confirm[^"]+)"/);
+                if (urlMatch && urlMatch[1]) {
+                    const fallbackLink = `\n\n👉 [결제 완료하러 가기](${urlMatch[1]})`;
+                    // 이미 텍스트에 링크가 있는지 확인 (중복 방지)
+                    if (!fullText.includes(urlMatch[1])) {
+                        injectionContent = fallbackLink + injectionContent;
+                        console.log('[FORCE_INJECT] 🔗 Text Link also injected (AI missed it).');
+                    }
+                }
+
+                controller.enqueue(new TextEncoder().encode(injectionContent));
                 (controller as any)._pendingActionData = null;
                 (controller as any)._actionDataInjected = true; // 주입 완료 플래그
             } else if (pendingActionData) {
