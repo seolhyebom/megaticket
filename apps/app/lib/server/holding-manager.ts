@@ -95,16 +95,21 @@ export async function createHolding(
 
     // V7.18: sourceRegion 결정 및 디버그 로그
     const sourceRegion = process.env.AWS_REGION || 'ap-northeast-2';
+    // [COST_OPTIMIZATION] 로그 주석 처리
+    /* 
     console.log('[HOLDING] Environment Debug:', {
         AWS_REGION: process.env.AWS_REGION,
         DR_RECOVERY_MODE: process.env.DR_RECOVERY_MODE,
         sourceRegion: sourceRegion
     });
+    */
 
     const MAX_RETRIES = 3;
     let retryCount = 0;
 
     // [DEBUG] 호출 파라미터 로깅
+    // [COST_OPTIMIZATION] 로그 주석 처리
+    /*
     console.log('[HOLDING] createHolding calling:', {
         performanceId,
         date,
@@ -113,10 +118,14 @@ export async function createHolding(
         userId,
         try: retryCount + 1
     });
+    */
 
     // 1. Check availability first (한 번만 체크)
     const { available, conflicts } = await areSeatsAvailable(performanceId, seats.map(s => s.seatId), date, time);
-    console.log('[HOLDING] areSeatsAvailable result:', { available, conflicts });
+
+    // [COST_OPTIMIZATION] 로그 주석 처리
+    // console.log('[HOLDING] areSeatsAvailable result:', { available, conflicts });
+
     if (!available) {
         return {
             success: false,
@@ -129,7 +138,7 @@ export async function createHolding(
     while (retryCount < MAX_RETRIES) {
         try {
             retryCount++;
-            console.log(`[HOLDING] Transaction Attempt ${retryCount}/${MAX_RETRIES}`);
+            // console.log(`[HOLDING] Transaction Attempt ${retryCount}/${MAX_RETRIES}`);
 
             // Create transactions to hold all seats
             const puts = seats.map(seat => ({
@@ -173,7 +182,8 @@ export async function createHolding(
                 TransactItems: puts
             }));
 
-            console.log(`[HOLDING] Transaction Success (Try ${retryCount}). Verifying...`);
+            // [COST_OPTIMIZATION] 로그 주석 처리
+            // console.log(`[HOLDING] Transaction Success (Try ${retryCount}). Verifying...`);
 
             // [Verify-After-Write] Strong Consistent Read로 검증
             // 트랜잭션은 Atomic하므로 첫 번째 좌석만 확인해도 충분함
@@ -187,7 +197,8 @@ export async function createHolding(
             }));
 
             if (verifyResult.Item && verifyResult.Item.holdingId === holdingId) {
-                console.log(`[HOLDING] ✅ Verification Success! Data confirmed in DynamoDB.`);
+                // [COST_OPTIMIZATION] 로그 주석 처리
+                // console.log(`[HOLDING] ✅ Verification Success! Data confirmed in DynamoDB.`);
 
                 // [V8.3] KST 시간 포맷 (AI가 변환하지 않도록 서버에서 제공)
                 const expiresAtText = new Intl.DateTimeFormat('ko-KR', {
@@ -199,7 +210,9 @@ export async function createHolding(
 
                 return { success: true, holdingId, expiresAt, expiresAtText, remainingSeconds: HOLDING_TTL_SECONDS };
             } else {
-                console.warn(`[HOLDING] ⚠️ Verification Failed! Data not found/matched after write. (Try ${retryCount})`);
+                // [COST_OPTIMIZATION] 로그 주석 처리
+                // console.warn(`[HOLDING] ⚠️ Verification Failed! Data not found/matched after write. (Try ${retryCount})`);
+
                 // 실패 시 다음 재시도 (재시도 루프 계속)
                 // 필요하다면 여기서 명시적으로 Delete를 날릴 수도 있지만,
                 // 트랜잭션은 성공했는데 조회가 안 된 것이므로 일시적 문제일 가능성이 큼.

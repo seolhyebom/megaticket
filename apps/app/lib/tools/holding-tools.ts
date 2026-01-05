@@ -161,6 +161,8 @@ export async function holdSeats(input: any) {
     const performanceTitle = perf?.title || '';
     const posterUrl = (perf as any)?.posterUrl || (perf as any)?.poster || '';
 
+    // [COST_OPTIMIZATION] 로그 주석 처리
+    /*
     console.log('[HOLD_SEATS] createHolding 호출 직전:', {
         performanceId,
         seatCount: seatObjects.length,
@@ -171,14 +173,17 @@ export async function holdSeats(input: any) {
         venue,
         performanceTitle
     });
+    */
 
     const result = await createHolding(performanceId, seatObjects, targetUserId, date, time, venue, performanceTitle, posterUrl);
 
     if (!result.success) {
-        console.log('[HOLDING] Failed:', { error: result.error, unavailable: result.unavailableSeats });
+        // [COST_OPTIMIZATION] 에러 로그는 유지하되 warn으로 조정
+        console.warn('[HOLDING] Failed:', { error: result.error, unavailable: result.unavailableSeats });
         return {
             success: false,
             error: result.error || "좌석 선점에 실패했습니다.",
+            // ... (생략)
             message: result.error === "일시적인 오류로 선점이 확인되지 않습니다. 잠시 후 다시 시도해주세요."
                 ? "죄송합니다, 일시적인 시스템 오류로 선점 확인이 되지 않았습니다. 잠시 후 다시 시도해주시겠어요? 🙏"
                 : `죄송합니다. ${result.unavailableSeats?.join(', ') || '선택하신 좌석'}이(가) 이미 선점 또는 예약 중입니다. 다른 좌석을 선택해주세요.`,
@@ -196,16 +201,18 @@ export async function holdSeats(input: any) {
         };
     }
 
-    // [V8.13 DEBUG] 성공 로깅
-    console.log('========================================');
-    console.log('[HOLD_SEATS] ✅ 선점 성공!');
+    // [V8.13 DEBUG] 성공 로깅 -> [COST_OPTIMIZATION] 주석 처리
+    // console.log('========================================');
+    // console.log('[HOLD_SEATS] ✅ 선점 성공!');
+    /*
     console.log(JSON.stringify({
         holdingId: result.holdingId,
         seatIds: seatObjects.map(s => s.seatId),
         totalPrice: seatObjects.reduce((sum, s) => sum + (s.price || 0), 0),
         expiresAt: result.expiresAt
     }, null, 2));
-    console.log('========================================');
+    */
+    // console.log('========================================');
 
     // 만료 시간: 10분 후 (V7.22: 60초 → 600초)
     const expiresAt = result.expiresAt || new Date(Date.now() + 600 * 1000).toISOString();
