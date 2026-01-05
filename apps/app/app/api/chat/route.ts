@@ -457,6 +457,17 @@ export async function POST(req: NextRequest) {
         const stream = new ReadableStream({
             async start(controller) {
                 await processConverseStream(messages, systemPromptText, controller, initialModel);
+
+                // [V8.23 FIX] 스트림 종료 직전 최종 안전장치: pendingActionData가 남아있으면 강제 주입
+                const pendingActionData = (controller as any)._pendingActionData;
+                const fullText = (controller as any)._generatedText || "";
+
+                if (pendingActionData && !fullText.includes('[[ACTION_DATA]]')) {
+                    console.log('[FINAL_INJECT] ACTION_DATA injected at stream close');
+                    controller.enqueue(new TextEncoder().encode('\n\n' + pendingActionData));
+                    (controller as any)._pendingActionData = null;
+                }
+
                 controller.close();
             },
         });
