@@ -163,13 +163,13 @@ resource "aws_launch_template" "app" {
     echo 'export DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules' >> /home/ec2-user/.bashrc
     chown ec2-user:ec2-user /home/ec2-user/.bashrc
     
-    # 9. App 빌드 (환경변수 inline 전달)
+    # 9. App 빌드 (.bashrc에서 환경변수 로드)
     echo "=== Building App ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${var.aws_region} DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules npm run build:app"
+    sudo -u ec2-user bash -c "source /home/ec2-user/.bashrc && source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && npm run build:app"
     
-    # 10. PM2로 App 서비스 시작 (환경변수 inline 전달)
+    # 10. PM2로 App 서비스 시작 (.bashrc에서 환경변수 로드)
     echo "=== Starting App Service with PM2 ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && AWS_REGION=${var.aws_region} DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules pm2 start npm --name \"app-backend\" -- start"
+    sudo -u ec2-user bash -c "source /home/ec2-user/.bashrc && source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && pm2 start npm --name 'app-backend' -- start"
     
     # 11. PM2 저장 및 startup 설정
     echo "=== Setting up PM2 Startup ==="

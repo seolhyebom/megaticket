@@ -1,0 +1,7 @@
+{
+    "commands": [
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 status'",
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 resurrect'",
+        "sudo -u ec2-user bash -c 'source ~/.nvm/nvm.sh && pm2 status'"
+    ]
+}

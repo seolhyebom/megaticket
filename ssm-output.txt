@@ -1,0 +1,14 @@
+﻿aws : 
+위치 줄:1 문자:13
++ chcp 65001; aws ssm get-command-invocation
+ --command-id d8ef2ff4-83e4 ...
++             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: 
+    (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommand 
+   Error
+ 
+'cp949' codec can't encode character '\u21ba
+' in position 220: illegal multibyte sequenc
+e
