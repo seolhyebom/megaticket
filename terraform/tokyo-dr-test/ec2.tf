@@ -50,9 +50,9 @@ resource "aws_launch_template" "web" {
     # 3. PM2 권한 수정 (필요시)
     sudo chown -R ec2-user:ec2-user $USER_HOME/.pm2 2>/dev/null || true
     
-    # 4. PM2 환경변수 업데이트 및 재시작
+    # 4. PM2 환경변수 업데이트 및 재시작 (Host Binding 강제 적용)
     echo "=== Restarting PM2 with DR Environment ==="
-    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export NEXT_PUBLIC_AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/web && pm2 delete web-frontend 2>/dev/null || true && pm2 start npm --name "web-frontend" -- start && pm2 save'
+    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export NEXT_PUBLIC_AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/web && pm2 delete web-frontend 2>/dev/null || true && pm2 start npm --name "web-frontend" -- start -- -H 0.0.0.0 -p 3000 && pm2 save'
     
     echo "=== DR User Data Script Completed: $(date) ==="
   EOF
@@ -104,9 +104,9 @@ resource "aws_launch_template" "app" {
     # 2. PM2 권한 수정 (필요시)
     sudo chown -R ec2-user:ec2-user $USER_HOME/.pm2 2>/dev/null || true
     
-    # 3. PM2 환경변수 업데이트 및 재시작
+    # 3. PM2 환경변수 업데이트 및 재시작 (Host Binding 강제 적용)
     echo "=== Restarting PM2 with DR Environment ==="
-    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/app && pm2 delete app-backend 2>/dev/null || true && pm2 start npm --name "app-backend" -- start && pm2 save'
+    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/app && pm2 delete app-backend 2>/dev/null || true && pm2 start npm --name "app-backend" -- start -- -H 0.0.0.0 -p 3001 && pm2 save'
     
     echo "=== DR User Data Script Completed: $(date) ==="
   EOF
