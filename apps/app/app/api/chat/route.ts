@@ -260,8 +260,18 @@ async function processConverseStream(
                     const isHoldingTool = (name === 'hold_seats' || name === 'create_holding');
                     const toolInput = isHoldingTool ? { ...parsedInput, sessionId } : parsedInput;
 
-                    // BEDROCK_TOOLS가 undefined일 경우 방어
-                    const validTool = (BEDROCK_TOOLS || []).some(t => t.toolSpec?.name === name);
+                    // [V8.31 Fix] Tool Validation Debugging & Relaxation
+                    // BEDROCK_TOOLS가 로드되지 않았거나 빈 배열인 경우 로깅
+                    if (!BEDROCK_TOOLS || BEDROCK_TOOLS.length === 0) {
+                        console.error('[CRITICAL] BEDROCK_TOOLS is empty or undefined! Check imports.');
+                    }
+
+                    // 호환성을 위해 toolSpec.name과 name 모두 확인
+                    const validTool = (BEDROCK_TOOLS || []).some(t =>
+                        t.toolSpec?.name === name || (t as any).name === name
+                    );
+
+
 
                     if (validTool) {
                         try {
@@ -299,11 +309,12 @@ async function processConverseStream(
                             });
                         }
                     } else {
-                        // Tool not found
-                        console.warn(`[ToolExec] Unknown tool requested: ${name}`);
+                        // [V8.31 Fix] 유효하지 않은 도구 호출 시 명시적 에러 반환 (AI 환각 방지)
+                        console.error(`[ToolError] Invalid tool name: ${name}`);
+                        console.log('[DEBUG] Available Tools:', (BEDROCK_TOOLS || []).map(t => t.toolSpec?.name || (t as any).name));
                         toolResults.push({
                             toolUseId: toolUseId || "unknown",
-                            content: [{ text: `Tool '${name}' not found.` }],
+                            content: [{ text: `Error: Tool '${name}' is not defined in the system. Please verify the tool name.` }],
                             status: "error"
                         });
                     }
