@@ -1,260 +1,115 @@
 # DR 테스트용 Terraform 실행 가이드
 
-> **Version**: 1.2  
-> **Last Updated**: 2026-01-05  
+> **Version**: 1.3
+> **Last Updated**: 2026-01-05
 > **작성자**: 설혜봄 (MSP-Project-Pilot-Light)
 
 ---
 
 ## 📋 개요
 
-서울 리전과 도쿄 리전에 DR 테스트용 Terraform 인프라를 구성하여 Pilot Light DR 전략을 테스트합니다.
+서울 리전(Primary)과 도쿄 리전(DR)에 Pilot Light 인프라를 구축하고 운영하기 위한 가이드입니다.
+서울/도쿄 환경은 Terraform으로 완전히 분리되어 관리됩니다.
 
 | 항목 | 서울 (seoul-test) | 도쿄 (tokyo-dr-test) |
 |------|-------------------|----------------------|
+| **역할** | **Primary (Active)** | **DR (Standby)** |
 | **VPC CIDR** | 10.100.0.0/16 | 10.1.0.0/16 |
-| **Public Subnet** | /26 (64 IPs) | /26 (64 IPs) |
-| **Private Subnet** | /20 (4096 IPs) | /20 (4096 IPs) |
-| **AWS Profile** | default | default |
-| **인스턴스 타입** | t2.medium | t2.medium |
-| **AMI** | Amazon Linux 2023 | GoldenAMI (서울에서 복사) |
-| **인스턴스 수** | Web 1, App 1 | Web 1, App 1 |
-| **ALB** | ✅ (HTTPS) | ✅ (HTTP) |
-| **NLB** | ✅ | ✅ |
-| **Auto Scaling** | min=1, max=1, desired=1 | min=1, max=1, desired=1 |
-| **VPC Endpoint** | DynamoDB (Gateway) | DynamoDB (Gateway) |
+| **Public Subnet** | ALB, NAT Gateway | ALB, NAT Gateway |
+| **Private Subnet** | Web, App, **Internal NLB** | Web, App, **Internal NLB** |
+| **AMI** | Amazon Linux 2023 | **GoldenAMI** (from Seoul) |
+| **Web-App 통신** | **Internal NLB (TCP 3001)** | **Internal NLB (TCP 3001)** |
+| **User Data** | 전체 빌드 및 설치 | 환경변수 주입 + PM2 재시작 |
 
 ---
 
-## 📁 디렉토리 구조
+## 🔁 **운영 워크플로우 (Operational Workflow)**
 
-```
-terraform/
-├── seoul-test/              # 서울 리전 (GoldenAMI 생성용)
-│   ├── main.tf              # VPC, Subnets, NAT Gateway, Route Tables, VPC Endpoint
-│   ├── variables.tf         # 변수 정의
-│   ├── security-groups.tf   # ALB, Web, App 보안 그룹
-│   ├── iam.tf               # IAM 역할 (SSM, Bedrock, DynamoDB, CloudWatch)
-│   ├── ec2.tf               # Launch Template + Auto Scaling (user_data 자동화)
-│   ├── alb.tf               # Application Load Balancer
-│   ├── nlb.tf               # Network Load Balancer
-│   ├── outputs.tf           # 출력값
-│   └── terraform.tfvars.example
-│
-└── tokyo-dr-test/           # 도쿄 리전 (GoldenAMI 사용)
-    ├── main.tf              # VPC, Subnets, NAT Gateway
-    ├── variables.tf         # 변수 정의 (GoldenAMI ID 필수)
-    ├── security-groups.tf   # 보안 그룹
-    ├── iam.tf               # IAM 역할
-    ├── ec2.tf               # GoldenAMI 사용, 환경변수 변경만 수행
-    ├── alb.tf               # ALB
-    ├── nlb.tf               # NLB
-    ├── outputs.tf           # 출력값
-    └── terraform.tfvars.example
-```
+### 1. 평소 운영 (Daily Operations)
+필요할 때 `terraform apply` (생성/수정) 또는 `terraform destroy` (삭제)만 하시면 됩니다.
+서울 폴더(`seoul-test`)와 도쿄 폴더(`tokyo-dr-test`)가 완전히 독립되어 있어서, 서로 영향 없이 자유롭게 생성하고 삭제할 수 있습니다.
+
+### 2. 새 버전 배포 및 AMI 업데이트 (Release Process)
+새로운 기능이 개발되어 배포해야 할 때의 절차입니다.
+
+1.  **서울 리전 개발 완료**: 서울에서 기능을 개발하고 테스트를 마칩니다.
+2.  **Golden AMI 생성**: 서울 Web/App 인스턴스로 새로운 Golden AMI를 생성합니다. (예: `ami-0abc...`)
+3.  **AMI 복사**: 생성된 AMI를 도쿄 리전(`ap-northeast-1`)으로 복사합니다.
+4.  **Terraform 수정**:
+    - 도쿄 Terraform 폴더(`tokyo-dr-test`)의 `variables.tf` (또는 `terraform.tfvars`)에서 `web_ami_id`, `app_ami_id`를 새로운 AMI ID로 변경합니다.
+5.  **배포**:
+    - `terraform apply` 실행! 🚀
+    - 도쿄 Auto Scaling Group(ASG)이 자동으로 감지하여 **새 AMI로 인스턴스를 교체**합니다.
+    - User Data가 자동으로 실행되어 도쿄 환경(`ap-northeast-1`)에 맞는 설정을 입히고 서비스를 시작합니다.
 
 ---
 
-## 🚀 실행 방법
+## 🚀 실행 가이드
 
-### Step 1: 서울 리전 인프라 배포
+### Step 1: 서울 리전 배포
 
 ```bash
 cd terraform/seoul-test
-
-# terraform.tfvars.example을 복사
-cp terraform.tfvars.example terraform.tfvars
-
-# 기본값이 이미 설정되어 있음:
-# - base_ami_id: ami-0b818a04bc9c2133c (Amazon Linux 2023)
-# - key_pair_name: seungwan_seoul
-
 terraform init
-terraform plan
 terraform apply
 ```
 
-### Step 2: 서비스 동작 확인
+서울 리전은 `Amazon Linux 2023` 기본 이미지를 사용하여 부팅 시 모든 패키지를 설치하고 빌드합니다. (약 10~15분 소요)
 
-```bash
-# ALB DNS로 접속
-curl http://<ALB_DNS_NAME>/
+### Step 2: Golden AMI 생성 및 복사
 
-# API 헬스체크
-curl http://<ALB_DNS_NAME>/api/health
+1.  **이미지 생성**: 서울 Web/App 인스턴스 우클릭 → 이미지 생성.
+2.  **이미지 복사**: 생성된 이미지를 **도쿄 리전(`ap-northeast-1`)**으로 복사.
 
-# 도메인 접속
-https://pilotlight-test.click
-```
-
-### Step 3: GoldenAMI 생성
-
-1. **EC2 콘솔** → **인스턴스** → Web 인스턴스 선택
-2. **작업** → **이미지 및 템플릿** → **이미지 생성**
-3. 이미지 이름: `MegaTicket-Web-GoldenAMI-YYYYMMDD`
-4. App 인스턴스도 동일하게 진행: `MegaTicket-App-GoldenAMI-YYYYMMDD`
-
-### Step 4: AMI를 도쿄로 복사
-
-1. **EC2** → **AMI** → 생성된 AMI 선택
-2. **작업** → **AMI 복사**
-3. **대상 리전**: `ap-northeast-1 (도쿄)`
-4. 복사 완료 후 도쿄 리전에서 AMI ID 확인
-
-### Step 5: 도쿄 리전 DR 테스트
+### Step 3: 도쿄 DR 리전 배포
 
 ```bash
 cd terraform/tokyo-dr-test
 
-# terraform.tfvars.example을 복사
-cp terraform.tfvars.example terraform.tfvars
-
-# ⚠️ 아래 값만 도쿄에 복사된 AMI ID로 수정
-# - web_ami_id: 도쿄에 복사된 Web AMI ID
-# - app_ami_id: 도쿄에 복사된 App AMI ID
-# - key_pair_name: seungwan_tokyo (기본값 설정됨)
+# terraform.tfvars 파일 수정 (AMI ID 입력)
+# web_ami_id = "ami-0123456789abcdef0" (도쿄로 복사된 ID)
+# app_ami_id = "ami-0123456789abcdef1" (도쿄로 복사된 ID)
 
 terraform init
-terraform plan
 terraform apply
 ```
 
-### Step 6: DR 서비스 동작 확인
+도쿄 리전은 Golden AMI를 사용하므로 배포 속도가 빠릅니다. (약 3~5분 소요)
+
+---
+
+## 🔧 주요 구성 상세
+
+### 1. Internal NLB (서울/도쿄 공통)
+보안을 위해 Web에서 App으로의 통신은 **Private Subnet에 위치한 Internal NLB**를 통해 이루어집니다.
+- **Port**: TCP 3001
+- **Cross-Zone Load Balancing**: Enabled
+
+### 2. User Data 및 PM2 설정
+Golden AMI 사용 시 기존 환경변수가 PM2 프로세스에 캐싱되는 문제를 방지하기 위해, User Data에서 **강제 환경변수 갱신** 옵션을 사용합니다.
 
 ```bash
-# DR ALB DNS로 접속
-curl http://<DR_ALB_DNS_NAME>/
-
-# API 헬스체크
-curl http://<DR_ALB_DNS_NAME>/api/health
-
-# SSM으로 인스턴스 접속하여 확인
-pm2 list
-echo $AWS_REGION          # ap-northeast-1 확인
-echo $DR_RECOVERY_MODE    # true 확인
-```
-
-### Step 7: 테스트 후 정리
-
-```bash
-# 도쿄 리전 먼저 정리
-cd terraform/tokyo-dr-test
-terraform destroy
-
-# 서울 리전 정리
-cd terraform/seoul-test
-terraform destroy
+# 도쿄 User Data 예시
+# .env.local 생성 (AWS_REGION=ap-northeast-1)
+...
+# PM2 재시작 (환경변수 캐시 무시 및 갱신)
+pm2 restart all --update-env
 ```
 
 ---
 
-## 🔧 user_data 자동화 내용 (서울 리전)
+## 🔥 트러블슈팅 (Troubleshooting)
 
-서울 리전 인스턴스는 부팅 시 다음 스크립트가 자동 실행됩니다:
+### 1. 도쿄 리전 접속 시 서울로 리다이렉트됨 (307 Loop)
+- **증상**: 도쿄 ALB로 접속했는데 URL이 `/?region=ap-northeast-2`로 바뀌며 접속 불가.
+- **원인**: Golden AMI의 PM2가 서울 리전 정보(`ap-northeast-2`)를 기억하고 있어서 발생.
+- **해결**: User Data 스크립트에서 `pm2 restart all --update-env` 명령어를 사용하여 환경변수를 강제 업데이트해야 함. (현재 코드에 반영됨)
 
-1. **Git 설치** (`dnf install git -y`)
-2. **NVM 설치** (v0.39.7)
-3. **Node.js 설치** (v24.12.0)
-4. **PM2 전역 설치** (`npm install -g pm2`)
-5. **소스코드 복제** (`git clone https://github.com/seolhyebom/megaticket.git`)
-6. **의존성 설치** (`npm install`)
-7. **빌드** (`npm run build:web` 또는 `npm run build:app`)
-8. **PM2 서비스 시작** (`pm2 start npm --name "web-frontend" -- start`)
-9. **PM2 startup 설정** (재부팅 시 자동 시작)
+### 2. Terraform State 불일치
+- **증상**: `couldn't find resource` 등의 에러 발생.
+- **해결**: AWS 콘솔에서 리소스를 임의로 삭제하지 말고, 반드시 `terraform destroy`를 사용하세요. 만약 꼬였다면 `terraform refresh` 또는 `terraform state rm` 명령어로 상태를 정리해야 합니다.
 
-> ⏱️ 인스턴스 부팅 후 서비스 시작까지 약 **10~15분** 소요됩니다.
-
----
-
-## 🔧 user_data 자동화 내용 (도쿄 리전)
-
-도쿄 리전은 GoldenAMI를 사용하므로 환경변수 변경만 수행합니다:
-
-1. **AWS_REGION** → `ap-northeast-1`
-2. **DR_RECOVERY_MODE** → `true`
-3. **PM2 재시작** (환경변수 적용)
-
-> ⏱️ 인스턴스 부팅 후 서비스 시작까지 약 **3~5분** 소요됩니다.
-
----
-
-## ⚠️ 주의사항
-
-> [!CAUTION]
-> **NAT Gateway는 시간당 과금됩니다!**  
-> 테스트 완료 후 반드시 `terraform destroy`를 실행하세요.
-
-> [!NOTE]
-> **DB는 이미 생성되어 있습니다.**  
-> Terraform에 DynamoDB 리소스가 포함되지 않았습니다. Global Table로 자동 복제됩니다.
-
-> [!TIP]
-> **user_data 로그 확인:**  
-> SSM으로 인스턴스 접속 후 `cat /var/log/user-data.log`로 스크립트 실행 로그를 확인할 수 있습니다.
-
----
-
-## 📊 비용 정보 (예상)
-
-| 리소스 | 시간당 비용 | 비고 |
-|--------|------------|------|
-| EC2 t2.medium × 2 | $0.0584 × 2 | Web + App |
-| NAT Gateway | $0.045 | + 데이터 전송 비용 |
-| ALB | $0.0225 | + LCU 비용 |
-| NLB | $0.0225 | + LCU 비용 |
-| VPC Endpoint (DynamoDB) | **무료** | Gateway 타입 |
-
-> 💰 **테스트 1시간 예상 비용**: 약 $0.20 ~ $0.30 (리전당)
-
----
-
-## 🔥 트러블슈팅
-
-### State 불일치 (Drift) 오류
-
-AWS 콘솔에서 리소스를 수동 삭제한 경우, Terraform state와 실제 AWS 상태가 불일치하여 에러가 발생할 수 있습니다.
-
-```
-Error: waiting for Auto Scaling Group (MegaTicket-App-ASG) drain: couldn't find resource
-```
-
-**해결 방법:**
-
-```bash
-# 1. 수동 삭제된 리소스를 state에서 제거
-terraform state rm aws_autoscaling_group.app
-terraform state rm aws_autoscaling_group.web
-
-# 2. 전체 state 초기화 (모든 리소스를 수동 삭제한 경우)
-rm terraform.tfstate terraform.tfstate.backup
-
-# 3. refresh 후 다시 destroy
-terraform destroy -refresh=true
-```
-
-> [!TIP]
-> **수동 삭제 대신 Terraform으로 관리하세요.**  
-> AWS 콘솔에서 직접 삭제하면 state 불일치가 발생합니다.
-
-### VPC CIDR 충돌
-
-기존 VPC와 CIDR이 겹치는 경우 에러가 발생합니다.
-
-```bash
-# 현재 설정 확인
-cat terraform.tfvars | grep cidr
-```
-
-**서울 리전은 `10.100.0.0/16`을 사용합니다** (기존 10.0.0.0/16 VPC와 충돌 방지)
-
-### IAM 권한 오류
-
-```
-Error: iam:CreateRole - AccessDenied
-```
-
-**해결:** `terraform.tfvars`의 `aws_profile`을 권한이 있는 프로필로 변경
-
-```hcl
-aws_profile = "default"  # 충분한 권한이 있는 프로필 사용
-```
+### 3. Failover/Failback 동작
+- **Failover**: 서울 리전 중단 시 약 1분 후 도쿄 리전으로 DNS 자동 전환.
+- **Failback**: 서울 리전 복구 시 **서울이 Primary이므로 무조건 서울로 복귀**.
+- **주의**: 서울이 죽은 상태에서 도쿄를 끄면 서비스 전면 중단됨. 서울을 보고 싶다면 도쿄를 끄는 게 아니라 서울을 살려야 함.

@@ -7,9 +7,10 @@
 # -----------------------------------------------------------------------------
 resource "aws_lb" "nlb" {
   name               = "${var.project_name}-NLB"
-  internal           = false
+  internal           = true
   load_balancer_type = "network"
-  subnets            = [aws_subnet.public_a.id, aws_subnet.public_c.id]
+  subnets            = [aws_subnet.private_a.id, aws_subnet.private_c.id]
+  enable_cross_zone_load_balancing = true
 
   tags = {
     Name = "${var.project_name}-NLB"
@@ -46,7 +47,7 @@ resource "aws_lb_target_group" "app_nlb" {
 # -----------------------------------------------------------------------------
 resource "aws_lb_listener" "nlb_tcp" {
   load_balancer_arn = aws_lb.nlb.arn
-  port              = 443
+  port              = 3001
   protocol          = "TCP"
 
   default_action {

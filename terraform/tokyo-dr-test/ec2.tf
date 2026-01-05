@@ -22,39 +22,29 @@ resource "aws_launch_template" "web" {
 
   # User Data - DR 환경변수 설정 및 PM2 재시작
   # GoldenAMI에는 이미 모든 소프트웨어가 설치되어 있음
+  # Web User Data (Golden AMI용 - 환경변수 설정 및 재시작)
   user_data = base64encode(<<-EOF
     #!/bin/bash
     set -e
+    exec > >(tee /var/log/user-data.log) 2>&1
+    echo "=== DR Web User Data Started: $(date) ==="
     
-    # 로그 파일 설정
-    exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-    echo "=== DR User Data Script Started: $(date) ==="
+    # 환경변수 파일 생성
+    cat > /home/ec2-user/megaticket/apps/web/.env.local << 'ENVEOF'
+    AWS_REGION=${var.aws_region}
+    NEXT_PUBLIC_AWS_REGION=${var.aws_region}
+    INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001
+    ENVEOF
     
-    USER_HOME=/home/ec2-user
     
-    # 1. DR 리전 환경변수 설정 (.bashrc에 추가)
-    echo "=== Setting DR Environment Variables ==="
-    sudo -u ec2-user bash -c "echo 'export AWS_REGION=${var.aws_region}' >> $USER_HOME/.bashrc"
-    sudo -u ec2-user bash -c "echo 'export NEXT_PUBLIC_AWS_REGION=${var.aws_region}' >> $USER_HOME/.bashrc"
-    sudo -u ec2-user bash -c "echo 'export INTERNAL_API_URL=https://${var.domain_name}' >> $USER_HOME/.bashrc"
-    sudo -u ec2-user bash -c "echo 'export DR_RECOVERY_MODE=true' >> $USER_HOME/.bashrc"
+    # PM2 restart with explicit environment variables (No Rebuild needed)
+    echo "=== Restarting Web Service with Explicit Env Vars ==="
+    # 1. 기존 프로세스 삭제 (환경변수 클린 적용)
+    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 delete web-frontend || true'
+    # 2. 환경변수와 함께 시작 (Runtime override - API 및 Next.js Runtime Config에 적용됨)
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && AWS_REGION=${var.aws_region} INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001 pm2 start npm --name \"web-frontend\" -- start"
     
-    # 2. .env.local 파일 수정 (도쿄 리전으로 변경)
-    echo "=== Updating .env.local ==="
-    cd $USER_HOME/megaticket/apps/web
-    if [ -f .env.local ]; then
-        sed -i 's/ap-northeast-2/ap-northeast-1/g' .env.local
-        grep -q "DR_RECOVERY_MODE" .env.local || echo "DR_RECOVERY_MODE=true" >> .env.local
-    fi
-    
-    # 3. PM2 권한 수정 (필요시)
-    sudo chown -R ec2-user:ec2-user $USER_HOME/.pm2 2>/dev/null || true
-    
-    # 4. PM2 환경변수 업데이트 및 재시작 (Host Binding 강제 적용)
-    echo "=== Restarting PM2 with DR Environment ==="
-    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export NEXT_PUBLIC_AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/web && pm2 delete web-frontend 2>/dev/null || true && pm2 start npm --name "web-frontend" -- start -- -H 0.0.0.0 -p 3000 && pm2 save'
-    
-    echo "=== DR User Data Script Completed: $(date) ==="
+    echo "=== DR Web User Data Completed: $(date) ==="
   EOF
   )
 
@@ -85,30 +75,31 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
-  # User Data - DR 환경변수 설정 및 PM2 재시작
+  # App User Data (Golden AMI용 - 환경변수 설정 및 재시작)
   user_data = base64encode(<<-EOF
     #!/bin/bash
     set -e
+    exec > >(tee /var/log/user-data.log) 2>&1
+    echo "=== DR App User Data Started: $(date) ==="
     
-    # 로그 파일 설정
-    exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
-    echo "=== DR User Data Script Started: $(date) ==="
+    # 환경변수 파일 생성
+    cat > /home/ec2-user/megaticket/apps/app/.env << 'ENVEOF'
+    AWS_REGION=${var.aws_region}
+    PORT=3001
+    DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations
+    DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances
+    DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues
+    DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules
+    DR_RECOVERY_MODE=true
+    ENVEOF
     
-    USER_HOME=/home/ec2-user
+    chown ec2-user:ec2-user /home/ec2-user/megaticket/apps/app/.env
     
-    # 1. DR 리전 환경변수 설정 (.bashrc에 추가)
-    echo "=== Setting DR Environment Variables ==="
-    sudo -u ec2-user bash -c "echo 'export AWS_REGION=${var.aws_region}' >> $USER_HOME/.bashrc"
-    sudo -u ec2-user bash -c "echo 'export DR_RECOVERY_MODE=true' >> $USER_HOME/.bashrc"
+    # PM2 restart with environment update (환경변수 명시적 전달)
+    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 delete app-backend || true'
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && AWS_REGION=${var.aws_region} DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules DR_RECOVERY_MODE=true pm2 start npm --name \"app-backend\" -- start"
     
-    # 2. PM2 권한 수정 (필요시)
-    sudo chown -R ec2-user:ec2-user $USER_HOME/.pm2 2>/dev/null || true
-    
-    # 3. PM2 환경변수 업데이트 및 재시작 (Host Binding 강제 적용)
-    echo "=== Restarting PM2 with DR Environment ==="
-    sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && export AWS_REGION=${var.aws_region} && export DR_RECOVERY_MODE=true && cd $HOME/megaticket/apps/app && pm2 delete app-backend 2>/dev/null || true && pm2 start npm --name "app-backend" -- start -- -H 0.0.0.0 -p 3001 && pm2 save'
-    
-    echo "=== DR User Data Script Completed: $(date) ==="
+    echo "=== DR App User Data Completed: $(date) ==="
   EOF
   )
 

@@ -17,6 +17,9 @@ import { ChatMessage } from "./chat/ChatMessage";
 import { useChatActions } from "@/hooks/useChatActions";
 import { ActionButton, TimerInfo, ActionData } from "@/types/chat";
 
+// [V8.33] Global Holding Status Panel
+import { HoldingStatusPanel } from "./holding-status-panel";
+
 interface Message {
     role: "user" | "assistant";
     content: string;
@@ -177,7 +180,19 @@ export function ChatInterface() {
                             console.log('[Timer] ✅ Setting activeTimer from ACTION_DATA:', parsed.timer);
                             console.log('[Timer] Current Time:', new Date().toISOString());
                             console.log('[Timer] Expires At:', parsed.timer.expiresAt);
-                            setActiveTimer(parsed.timer);
+
+                            // [V8.33] Merge extended info for HoldingStatusPanel
+                            const extendedTimer = {
+                                ...parsed.timer,
+                                // 추가 정보가 parsed에 직접 있을 수 있음 (백엔드 응답 구조에 따라)
+                                performanceName: parsed.timer.performanceName || (parsed as any).performanceName,
+                                performanceDate: parsed.timer.performanceDate || (parsed as any).performanceDate,
+                                seats: parsed.timer.seats || parsed.timer.heldSeats || (parsed as any).seats || (parsed as any).heldSeats,
+                                totalPrice: parsed.timer.totalPrice || (parsed as any).totalPrice,
+                                payUrl: parsed.timer.payUrl || (parsed as any).payUrl ||
+                                    (parsed.actions?.find(a => a.id === 'pay')?.url),
+                            };
+                            setActiveTimer(extendedTimer);
                         } else {
                             console.warn('[Timer] ⚠️ ACTION_DATA found but NO timer field:', parsed);
                         }
@@ -268,6 +283,20 @@ export function ChatInterface() {
             role: "assistant",
             content: "선점 시간이 경과되어 예약이 취소 되었습니다. 다시 좌석을 선택해주세요."
         }]);
+    };
+
+    // [V8.33] 선점 취소 핸들러 (패널에서 호출)
+    const handleHoldingCancel = async () => {
+        if (activeTimer?.holdingId) {
+            try {
+                console.log('[HoldingPanel] Cancelling holding:', activeTimer.holdingId);
+                await apiClient.deleteHolding(activeTimer.holdingId);
+            } catch (e) {
+                console.error('[HoldingPanel] Failed to cancel holding:', e);
+            }
+        }
+        setActiveTimer(undefined);
+        setMessages(prev => prev.map(m => ({ ...m, actions: undefined, timer: undefined })));
     };
 
     // Auto-scroll
@@ -493,6 +522,22 @@ export function ChatInterface() {
                     </form>
                 </CardFooter>
             </Card>
+
+            {/* [V8.33] 글로벌 선점 현황 패널 (팝업 스타일) */}
+            <HoldingStatusPanel
+                activeTimer={activeTimer ? {
+                    holdingId: activeTimer.holdingId || '',
+                    performanceName: (activeTimer as any).performanceName,
+                    performanceDate: (activeTimer as any).performanceDate,
+                    expiresAt: activeTimer.expiresAt,
+                    seats: (activeTimer as any).seats || (activeTimer as any).heldSeats,
+                    totalPrice: (activeTimer as any).totalPrice,
+                    payUrl: (activeTimer as any).payUrl,
+                    message: activeTimer.message,
+                } : null}
+                onCancel={handleHoldingCancel}
+                onExpire={handleTimerExpire}
+            />
         </div >
     );
 }

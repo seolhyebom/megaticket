@@ -25,6 +25,31 @@ export interface TimerInfo {
     message: string;
     warningThreshold?: number;
     holdingId?: string; // [V8.4] For auto-release on timeout
+    // [V8.33] Extended for HoldingStatusPanel
+    performanceName?: string;
+    performanceDate?: string;
+    seats?: Array<{
+        seatId: string;
+        grade: string;
+        section?: string;
+        row?: string;
+        rowId?: string;
+        number?: string;
+        seatNumber?: number;
+        price: number;
+    }>;
+    heldSeats?: Array<{
+        seatId: string;
+        grade: string;
+        section?: string;
+        row?: string;
+        rowId?: string;
+        number?: string;
+        seatNumber?: number;
+        price: number;
+    }>;
+    totalPrice?: number;
+    payUrl?: string;
 }
 
 export interface ActionData {

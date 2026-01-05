@@ -64,16 +64,16 @@ resource "aws_launch_template" "web" {
     # .bashrc에 추가 (SSH 접속 시 사용) - 명시적 경로 사용
     echo 'export AWS_REGION=${var.aws_region}' >> /home/ec2-user/.bashrc
     echo 'export NEXT_PUBLIC_AWS_REGION=${var.aws_region}' >> /home/ec2-user/.bashrc
-    echo 'export INTERNAL_API_URL=https://${var.domain_name}' >> /home/ec2-user/.bashrc
+    echo 'export INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001' >> /home/ec2-user/.bashrc
     chown ec2-user:ec2-user /home/ec2-user/.bashrc
     
     # 9. Web 앱 빌드 (환경변수 inline 전달 - NEXT_PUBLIC_* 는 빌드 시점에 bake-in 됨)
     echo "=== Building Web App ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${var.aws_region} NEXT_PUBLIC_AWS_REGION=${var.aws_region} INTERNAL_API_URL=https://${var.domain_name} npm run build:web"
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${var.aws_region} NEXT_PUBLIC_AWS_REGION=${var.aws_region} INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001 npm run build:web"
     
     # 10. PM2로 Web 서비스 시작 (환경변수 inline 전달)
     echo "=== Starting Web Service with PM2 ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && AWS_REGION=${var.aws_region} INTERNAL_API_URL=https://${var.domain_name} pm2 start npm --name \"web-frontend\" -- start"
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && AWS_REGION=${var.aws_region} INTERNAL_API_URL=http://${aws_lb.nlb.dns_name}:3001 pm2 start npm --name \"web-frontend\" -- start"
     
     # 11. PM2 저장 및 startup 설정
     echo "=== Setting up PM2 Startup ==="
@@ -157,15 +157,19 @@ resource "aws_launch_template" "app" {
     echo "=== Setting Environment Variables ==="
     # .bashrc에 추가 (SSH 접속 시 사용) - 명시적 경로 사용
     echo 'export AWS_REGION=${var.aws_region}' >> /home/ec2-user/.bashrc
+    echo 'export DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations' >> /home/ec2-user/.bashrc
+    echo 'export DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances' >> /home/ec2-user/.bashrc
+    echo 'export DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues' >> /home/ec2-user/.bashrc
+    echo 'export DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules' >> /home/ec2-user/.bashrc
     chown ec2-user:ec2-user /home/ec2-user/.bashrc
     
     # 9. App 빌드 (환경변수 inline 전달)
     echo "=== Building App ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${var.aws_region} npm run build:app"
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${var.aws_region} DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules npm run build:app"
     
     # 10. PM2로 App 서비스 시작 (환경변수 inline 전달)
     echo "=== Starting App Service with PM2 ==="
-    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && AWS_REGION=${var.aws_region} pm2 start npm --name \"app-backend\" -- start"
+    sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && AWS_REGION=${var.aws_region} DYNAMODB_RESERVATIONS_TABLE=${var.dynamodb_table_prefix}-reservations DYNAMODB_PERFORMANCES_TABLE=${var.dynamodb_table_prefix}-performances DYNAMODB_VENUES_TABLE=${var.dynamodb_table_prefix}-venues DYNAMODB_SCHEDULES_TABLE=${var.dynamodb_table_prefix}-schedules pm2 start npm --name \"app-backend\" -- start"
     
     # 11. PM2 저장 및 startup 설정
     echo "=== Setting up PM2 Startup ==="

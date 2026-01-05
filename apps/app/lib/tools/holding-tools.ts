@@ -277,12 +277,30 @@ export async function holdSeats(input: any) {
     const seatMapUrlWithRegion = `/performances/${performanceId}/seats?date=${date}&time=${time}&region=${region}`;
 
     // [V8.6] AI가 바로 복사-붙여넣기할 수 있는 완전한 ACTION_DATA JSON
+    // [V8.33] Extended for HoldingStatusPanel
+    const heldSeatsInfo = seatObjects.map(s => ({
+        seatId: s.seatId,
+        grade: s.grade,
+        rowId: s.rowId,
+        row: s.row,
+        seatNumber: s.seatNumber,
+        number: String(s.seatNumber),
+        price: s.price
+    }));
+    const totalPriceCalc = seatObjects.reduce((sum, s) => sum + (s.price || 0), 0);
+
     const actionDataJson = JSON.stringify({
         timer: {
             expiresAt: expiresAt,
             holdingId: result.holdingId,
             message: "선점 시간",
-            warningThreshold: 30
+            warningThreshold: 30,
+            // [V8.33] Extended info for HoldingStatusPanel
+            performanceName: performanceTitle || performanceId,
+            performanceDate: `${date} ${time}`,
+            seats: heldSeatsInfo,
+            totalPrice: totalPriceCalc,
+            payUrl: payUrl,
         },
         actions: [
             { id: "pay", label: "결제 진행", action: "navigate", url: payUrl, target: "_blank", style: "primary" },

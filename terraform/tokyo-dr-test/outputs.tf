@@ -55,7 +55,7 @@ output "instructions" {
        http://${aws_lb.dr.dns_name}/api/health
     
     3. NLB DNS로 직접 API 접근:
-       http://${aws_lb.nlb.dns_name}:443
+       http://${aws_lb.nlb.dns_name}:3001
     
     4. 인스턴스 상태 확인 (SSM으로 접속):
        - pm2 list

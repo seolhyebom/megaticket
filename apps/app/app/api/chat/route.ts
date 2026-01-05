@@ -278,7 +278,7 @@ async function processConverseStream(
                             const result = await executeTool(name || "unknown", toolInput);
 
                             // [V8.24] 강화된 FAIL-SAFE UI Injection
-                            const isHoldingTool = (name === 'hold_seats' || name === 'create_holding');
+                            // isHoldingTool은 260줄에서 이미 선언됨
                             if (isHoldingTool && result.success && result.holdingId) {
                                 (controller as any)._holdingSuccess = true;
                                 console.log('[HOLDING_SUCCESS] 🎫 좌석 선점 성공! holdingId:', result.holdingId);
@@ -412,6 +412,7 @@ async function processConverseStream(
 }
 
 // [V8.22] Helper for Fail-safe UI Data Generation
+// [V8.33] Extended for HoldingStatusPanel
 function generateActionData(result: any, performanceId: string, date: string, time: string) {
     const region = process.env.AWS_REGION || 'ap-northeast-2';
     const expiresAt = result.expiresAt || new Date(Date.now() + 600 * 1000).toISOString();
@@ -421,13 +422,23 @@ function generateActionData(result: any, performanceId: string, date: string, ti
     const payUrl = `/reservation/confirm?holdingId=${holdingId}&expiresAt=${encodeURIComponent(expiresAt)}&region=${region}`;
     const seatMapUrl = `/performances/${performanceId}/seats?date=${date}&time=${time}&region=${region}`;
 
-    // JSON 구성
+    // 좌석 정보 추출
+    const seats = result.heldSeats || result.seats || [];
+    const totalPrice = result.totalPrice || seats.reduce((sum: number, s: any) => sum + (s.price || 0), 0);
+
+    // JSON 구성 - [V8.33] 확장 정보 포함
     const data = {
         timer: {
             expiresAt,
             holdingId,
             message: "선점 시간 (Fail-safe Generated)",
-            warningThreshold: 30
+            warningThreshold: 30,
+            // [V8.33] Extended info for HoldingStatusPanel
+            performanceName: result.performanceName || performanceId,
+            performanceDate: `${date} ${time}`,
+            seats: seats,
+            totalPrice: totalPrice,
+            payUrl: payUrl,
         },
         actions: [
             { id: "pay", label: "결제 진행", action: "navigate", url: payUrl, target: "_blank", style: "primary" },

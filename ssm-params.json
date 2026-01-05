@@ -1,0 +1,15 @@
+{
+    "InstanceIds": [
+        "i-0fbf902ef33ffd43a"
+    ],
+    "DocumentName": "AWS-RunShellScript",
+    "Parameters": {
+        "commands": [
+            "sudo -u ec2-user bash -c 'source /home/ec2-user/.nvm/nvm.sh; pm2 list'",
+            "echo '--- CURL TEST ---'",
+            "curl -v http://localhost:3000/api/health",
+            "echo '--- ERROR LOG ---'",
+            "tail -n 20 /home/ec2-user/.pm2/logs/web-frontend-error.log"
+        ]
+    }
+}

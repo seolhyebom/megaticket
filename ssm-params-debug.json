@@ -1,0 +1,13 @@
+{
+    "InstanceIds": [
+        "i-0fbf902ef33ffd43a"
+    ],
+    "DocumentName": "AWS-RunShellScript",
+    "Parameters": {
+        "commands": [
+            "ls -l /home/ec2-user/megaticket/apps/web/ecosystem.config.js",
+            "cat /home/ec2-user/megaticket/apps/web/ecosystem.config.js",
+            "sudo -u ec2-user bash -c 'source /home/ec2-user/.nvm/nvm.sh; cd /home/ec2-user/megaticket/apps/web; pm2 start ecosystem.config.js --no-daemon'"
+        ]
+    }
+}
