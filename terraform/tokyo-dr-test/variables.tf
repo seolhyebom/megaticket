@@ -95,37 +95,37 @@ variable "instance_type" {
 variable "web_asg_min" {
   description = "Web ASG 최소 인스턴스"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "web_asg_max" {
-  description = "Web ASG 최대 인스턴스 (테스트용)"
+  description = "Web ASG 최대 인스턴스"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "web_asg_desired" {
-  description = "Web ASG 희망 인스턴스 (테스트용 1개)"
+  description = "Web ASG 희망 인스턴스 (Cold Standby 0개)"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "app_asg_min" {
   description = "App ASG 최소 인스턴스"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 variable "app_asg_max" {
-  description = "App ASG 최대 인스턴스 (테스트용)"
+  description = "App ASG 최대 인스턴스"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 variable "app_asg_desired" {
-  description = "App ASG 희망 인스턴스 (테스트용 1개)"
+  description = "App ASG 희망 인스턴스 (Cold Standby 0개)"
   type        = number
-  default     = 1
+  default     = 0
 }
 
 # -----------------------------------------------------------------------------

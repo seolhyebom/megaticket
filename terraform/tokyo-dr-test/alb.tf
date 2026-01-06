@@ -83,6 +83,15 @@ resource "aws_lb_listener" "http" {
 }
 
 # -----------------------------------------------------------------------------
+# Data Source - ACM (외부에서 생성된 인증서 검색)
+# -----------------------------------------------------------------------------
+data "aws_acm_certificate" "issued" {
+  domain   = var.domain_name
+  statuses = ["ISSUED"]
+  most_recent = true
+}
+
+# -----------------------------------------------------------------------------
 # ALB Listener - HTTPS (Port 443)
 # -----------------------------------------------------------------------------
 resource "aws_lb_listener" "https" {
@@ -90,14 +99,12 @@ resource "aws_lb_listener" "https" {
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.main.certificate_arn
+  certificate_arn   = data.aws_acm_certificate.issued.arn
 
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web.arn
   }
-
-  depends_on = [aws_acm_certificate_validation.main]
 }
 
 # -----------------------------------------------------------------------------

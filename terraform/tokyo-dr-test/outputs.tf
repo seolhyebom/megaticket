@@ -38,39 +38,34 @@ output "public_subnet_ids" {
 }
 
 # =============================================================================
-# DR 테스트 안내
+# DR 안내 (Cold Standby)
 # =============================================================================
 output "instructions" {
-  description = "DR 테스트 안내"
+  description = "DR 안내"
   value       = <<-EOT
     
     ============================================================
-    도쿄 DR 리전 인프라가 생성되었습니다!
+    도쿄 DR 리전 인프라 (Cold Standby) 준비 완료!
     ============================================================
     
-    1. DR ALB DNS로 접속하여 서비스 동작 확인:
+    현재 비용 최적화를 위해 인스턴스는 0대로 설정되어 있습니다. (Desired=0)
+    시스템을 가동하려면 다음 단계를 수행하세요:
+
+    1. 도쿄 인전 ASG 용량 상향 (1대 이상):
+       terraform apply -var="web_asg_desired=1" -var="app_asg_desired=1"
+
+    2. 서비스 확인 (Web):
        http://${aws_lb.dr.dns_name}
     
-    2. API 헬스체크:
+    3. API 헬스체크 (App):
        http://${aws_lb.dr.dns_name}/api/health
     
-    3. NLB DNS로 직접 API 접근:
-       http://${aws_lb.nlb.dns_name}:3001
-    
-    4. 인스턴스 상태 확인 (SSM으로 접속):
-       - pm2 list
-       - pm2 logs
-       - echo $AWS_REGION (ap-northeast-1 확인)
-       - echo $DR_RECOVERY_MODE (true 확인)
-    
-    5. DynamoDB Global Table 데이터 확인:
-       - 서울에서 입력한 데이터가 도쿄에서도 조회되는지 확인
-    
-    6. 테스트 완료 후 리소스 정리:
-       terraform destroy
-    
+    4. 외부 인증서 연동 (팀원 제공 시):
+       타 팀원이 생성한 ACM 인증서가 'pilotlight-test.click'으로 존재해야 
+       HTTPS(443) 접속이 가능합니다. (현재는 HTTP 80 권장)
+
     ============================================================
-    주의: NAT Gateway는 시간당 과금됩니다. 테스트 후 반드시 destroy!
+    주의: NAT Gateway 및 로드 밸런서는 상시 과금 리소스입니다.
     ============================================================
   EOT
 }

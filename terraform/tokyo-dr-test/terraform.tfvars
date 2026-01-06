@@ -25,14 +25,14 @@ instance_type = "t2.medium"
 web_ami_id = "ami-07892de1e920f02a3"  # 도쿄에 복사된 Web AMI
 app_ami_id = "ami-06d71ad672bf7af72"  # 도쿄에 복사된 App AMI
 
-# Auto Scaling (테스트용 - 각 1개)
-web_asg_min     = 1
-web_asg_max     = 1
-web_asg_desired = 1
+# Auto Scaling (Desired 0 - Cold Standby)
+web_asg_min     = 0
+web_asg_max     = 0
+web_asg_desired = 0
 
-app_asg_min     = 1
-app_asg_max     = 1
-app_asg_desired = 1
+app_asg_min     = 0
+app_asg_max     = 0
+app_asg_desired = 0
 
 # DynamoDB (참조용 - Global Table은 서울에서 관리)
 dynamodb_table_prefix = "KDT-Msp4-PLDR"
@@ -40,13 +40,4 @@ dynamodb_table_prefix = "KDT-Msp4-PLDR"
 # 도메인
 domain_name = "pilotlight-test.click"
 
-# =============================================================================
-# Route 53 Failover 설정
-# =============================================================================
-# Route 53 Hosted Zone ID (pilotlight-test.click)
-route53_zone_id = "Z0853952ATBTQYQZAMXB"
-
-# 서울 ALB 정보 (Primary)
-seoul_alb_dns     = "MegaTicket-ALB-700199485.ap-northeast-2.elb.amazonaws.com"
-seoul_alb_zone_id = "ZWKZPGTI48KDX"
 
