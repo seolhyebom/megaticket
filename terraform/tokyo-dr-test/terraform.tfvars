@@ -20,10 +20,7 @@ private_subnet_c_cidr = "10.1.32.0/20"   # 4096 IPs
 key_pair_name = "seungwan_tokyo"
 instance_type = "t2.medium"
 
-# ⚠️ GoldenAMI ID - 서울에서 복사한 AMI ID로 교체 필요!
-# AMI 복사 후 도쿄 리전에서 AMI ID 확인하여 입력
-web_ami_id = "ami-07892de1e920f02a3"  # 도쿄에 복사된 Web AMI
-app_ami_id = "ami-06d71ad672bf7af72"  # 도쿄에 복사된 App AMI
+# ⚠️ AMI는 Step Function에서 관리 - 테라폼에서 관리하지 않음
 
 # Auto Scaling (Desired 0 - Cold Standby)
 web_asg_min     = 0

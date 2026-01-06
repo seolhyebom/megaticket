@@ -3,6 +3,7 @@
 # =============================================================================
 # GoldenAMI 사용 - user_data는 환경변수 변경 및 PM2 재시작만 수행
 # Web, App 모두 Private Subnet에 배치
+# ⚠️ AMI는 Step Function에서 관리 - image_id는 Step Function이 LT 업데이트 시 주입
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -10,7 +11,7 @@
 # -----------------------------------------------------------------------------
 resource "aws_launch_template" "web" {
   name_prefix   = "${var.project_name}-DR-Web-LT-"
-  image_id      = var.web_ami_id
+  # image_id는 Step Function에서 LT 업데이트 시 주입
   instance_type = var.instance_type
   key_name      = var.key_pair_name
 
@@ -37,6 +38,7 @@ resource "aws_launch_template" "web" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = [image_id]  # Step Function이 관리
   }
 }
 
@@ -45,7 +47,7 @@ resource "aws_launch_template" "web" {
 # -----------------------------------------------------------------------------
 resource "aws_launch_template" "app" {
   name_prefix   = "${var.project_name}-DR-App-LT-"
-  image_id      = var.app_ami_id
+  # image_id는 Step Function에서 LT 업데이트 시 주입
   instance_type = var.instance_type
   key_name      = var.key_pair_name
 
@@ -70,6 +72,7 @@ resource "aws_launch_template" "app" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = [image_id]  # Step Function이 관리
   }
 }
 
@@ -104,6 +107,7 @@ resource "aws_autoscaling_group" "web" {
 
 # -----------------------------------------------------------------------------
 # Auto Scaling Group - App (Private Subnet)
+# NLB TG만 연결 - ALB 직접 접근 차단
 # -----------------------------------------------------------------------------
 resource "aws_autoscaling_group" "app" {
   name                = "${var.project_name}-DR-App-ASG"
@@ -111,7 +115,7 @@ resource "aws_autoscaling_group" "app" {
   max_size            = var.app_asg_max
   desired_capacity    = var.app_asg_desired
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = [aws_lb_target_group.app.arn, aws_lb_target_group.app_nlb.arn]
+  target_group_arns   = [aws_lb_target_group.app_nlb.arn]  # NLB TG만 연결
   health_check_type   = "ELB"
   health_check_grace_period = 300
 

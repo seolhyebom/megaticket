@@ -71,17 +71,7 @@ variable "key_pair_name" {
   default     = "seungwan_tokyo"
 }
 
-variable "web_ami_id" {
-  description = "Web Golden AMI ID (서울에서 복사된 AMI)"
-  type        = string
-  # 실행 시 반드시 지정 필요: terraform apply -var="web_ami_id=ami-xxx"
-}
-
-variable "app_ami_id" {
-  description = "App Golden AMI ID (서울에서 복사된 AMI)"
-  type        = string
-  # 실행 시 반드시 지정 필요: terraform apply -var="app_ami_id=ami-yyy"
-}
+# ⚠️ AMI는 Step Function에서 관리 - 테라폼에서 관리하지 않음
 
 variable "instance_type" {
   description = "EC2 인스턴스 타입"

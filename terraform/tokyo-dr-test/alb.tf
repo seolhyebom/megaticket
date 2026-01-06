@@ -41,29 +41,6 @@ resource "aws_lb_target_group" "web" {
 }
 
 # -----------------------------------------------------------------------------
-# Target Group - App (Port 3001)
-# -----------------------------------------------------------------------------
-resource "aws_lb_target_group" "app" {
-  name     = "${var.project_name}-DR-App-TG"
-  port     = 3001
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.dr.id
-
-  health_check {
-    path                = "/api/health"
-    healthy_threshold   = 2
-    unhealthy_threshold = 5
-    timeout             = 5
-    interval            = 30
-    matcher             = "200"
-  }
-
-  tags = {
-    Name = "${var.project_name}-DR-App-TG"
-  }
-}
-
-# -----------------------------------------------------------------------------
 # ALB Listener - HTTP (Port 80)
 # -----------------------------------------------------------------------------
 resource "aws_lb_listener" "http" {
@@ -104,24 +81,5 @@ resource "aws_lb_listener" "https" {
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.web.arn
-  }
-}
-
-# -----------------------------------------------------------------------------
-# ALB Listener Rule - API 요청은 App Target Group으로 전달
-# -----------------------------------------------------------------------------
-resource "aws_lb_listener_rule" "api" {
-  listener_arn = aws_lb_listener.https.arn
-  priority     = 1
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["/api/*"]
-    }
   }
 }
