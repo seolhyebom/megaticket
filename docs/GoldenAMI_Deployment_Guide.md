@@ -16,6 +16,12 @@
 
 Web 인스턴스는 사용자의 요청을 받아 백엔드(App)로 전달하는 역할을 합니다.
 
+> [!NOTE]
+> **왜 `pilotlight-test.click` 대신 `INTERNAL_API_URL`을 쓰나요?**
+> *   `pilotlight-test.click`: 사용자가 외부(브라우저)에서 접속하는 **외부 통로(ALB)**입니다.
+> *   `INTERNAL_API_URL`: 웹 서버가 소스 코드 내부에서 백엔드 API와 통신하는 **내부 통로(NLB)**입니다.
+> *   내부 통로를 사용하면 외부 인터넷을 거치지 않아 **속도가 훨씬 빠르고, 불필요한 데이터 전송 비용(NAT GW 비용 등)을 아낄 수 있습니다.**
+
 ### 필수 환경변수
 | 변수명 | 설명 | 예시 값 |
 | :--- | :--- | :--- |
@@ -50,7 +56,14 @@ App 인스턴스는 데이터베이스(DynamoDB)와 통신하며 실제 비즈�
 | `PORT` | 서비스 포트 | `3001` |
 | `DYNAMODB_PERFORMANCES_TABLE` | 공연 정보 테이블명 | `KDT-Msp4-PLDR-performances` |
 | `DYNAMODB_RESERVATIONS_TABLE` | 예약 정보 테이블명 | `KDT-Msp4-PLDR-reservations` |
+| `DYNAMODB_SCHEDULES_TABLE` | 스케줄 테이블명 (추가) | `KDT-Msp4-PLDR-schedules` |
+| `DYNAMODB_VENUES_TABLE` | 공연장 테이블명 (추가) | `KDT-Msp4-PLDR-venues` |
 | `DR_RECOVERY_MODE` | DR 복구 모드 활성화 여부 | `true` |
+
+> [!TIP]
+> **`DR_RECOVERY_MODE=true` 설정 시 작동 원리**
+> *   **30분 유예 기간**: 서울 리전에서 장애 발생 전 "선점 중(HOLDING)"이었던 데이터가 도쿄 리전으로 넘어올 때, 원래의 10분 만료 시간을 무시하고 **도쿄 서버 시작 시점부터 30분 동안 유예 기간**을 줍니다.
+> *   **결과**: 사용자는 서울에서 잡았던 좌석을 도쿄 리전에 접속하여 '내 예약' 페이지에서 확인하고, 30분 내에 결제를 완료하여 예약을 확정할 수 있습니다.
 
 > [!NOTE]
 > 테이블명은 테라폼의 `dynamodb_table_prefix` 변수 값에 따라 달라질 수 있습니다.
@@ -63,11 +76,18 @@ export AWS_REGION=ap-northeast-1
 export PORT=3001
 export DYNAMODB_PERFORMANCES_TABLE=KDT-Msp4-PLDR-performances
 export DYNAMODB_RESERVATIONS_TABLE=KDT-Msp4-PLDR-reservations
+export DYNAMODB_SCHEDULES_TABLE=KDT-Msp4-PLDR-schedules
+export DYNAMODB_VENUES_TABLE=KDT-Msp4-PLDR-venues
 export DR_RECOVERY_MODE=true
 
 # 2. PM2 기존 프로세스 제거 후 환경변수와 함께 재시작
 sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && \
-AWS_REGION=$AWS_REGION PORT=$PORT DYNAMODB_PERFORMANCES_TABLE=$DYNAMODB_PERFORMANCES_TABLE DR_RECOVERY_MODE=$DR_RECOVERY_MODE pm2 start npm --name 'app-backend' -- start"
+AWS_REGION=$AWS_REGION PORT=$PORT \
+DYNAMODB_PERFORMANCES_TABLE=$DYNAMODB_PERFORMANCES_TABLE \
+DYNAMODB_RESERVATIONS_TABLE=$DYNAMODB_RESERVATIONS_TABLE \
+DYNAMODB_SCHEDULES_TABLE=$DYNAMODB_SCHEDULES_TABLE \
+DYNAMODB_VENUES_TABLE=$DYNAMODB_VENUES_TABLE \
+DR_RECOVERY_MODE=$DR_RECOVERY_MODE pm2 start npm --name 'app-backend' -- start"
 
 # 3. 설정 저장
 sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && pm2 save"
