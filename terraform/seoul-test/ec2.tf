@@ -55,6 +55,70 @@ resource "aws_launch_template" "web" {
     echo "=== Cloning Repository ==="
     sudo -u ec2-user bash -c 'cd $HOME && rm -rf megaticket && git clone ${var.github_repo}'
     
+    # 6.1 누락된 빌드 파일 복구 (안전장치 - GitHub 유실 대비)
+    echo "=== Restoring Missing Build Files (Fail-safe) ==="
+    sudo -u ec2-user bash -c 'cd $HOME/megaticket && ( [ ! -f package.json ] && echo "Restoring package.json..." && cat << "EOF_PKG" > package.json
+{
+    "name": "mega-ticket",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "turbo run dev",
+        "dev:web": "turbo run dev --filter=web",
+        "dev:app": "turbo run dev --filter=app",
+        "build": "turbo run build",
+        "build:web": "turbo run build --filter=web",
+        "build:app": "turbo run build --filter=app",
+        "lint": "turbo run lint",
+        "clean": "turbo run clean",
+        "clean:force": "echo \"Warning: This may fail if files are locked.\" && turbo run clean --no-daemon && if exist node_modules rmdir /s /q node_modules",
+        "test-chatbot": "node diagnose_v7_9.js"
+    },
+    "devDependencies": {
+        "@aws-sdk/credential-providers": "^3.958.0",
+        "prettier": "^3.1.0",
+        "turbo": "^2.3.3",
+        "typescript": "^5.3.0"
+    },
+    "packageManager": "npm@10.2.5"
+}
+EOF_PKG
+) || true'
+
+    sudo -u ec2-user bash -c 'cd $HOME/megaticket && ( [ ! -f turbo.json ] && echo "Restoring turbo.json..." && cat << "EOF_TURBO" > turbo.json
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        ".env"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "clean": {
+            "cache": false
+        },
+        "lint": {}
+    }
+}
+EOF_TURBO
+) || true'
+
+    
     # 7. 의존성 설치
     echo "=== Installing Dependencies ==="
     sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && cd $HOME/megaticket && npm install'
@@ -148,6 +212,70 @@ resource "aws_launch_template" "app" {
     # 6. 소스코드 복제
     echo "=== Cloning Repository ==="
     sudo -u ec2-user bash -c 'cd $HOME && rm -rf megaticket && git clone ${var.github_repo}'
+    
+    # 6.1 누락된 빌드 파일 복구 (안전장치 - GitHub 유실 대비)
+    echo "=== Restoring Missing Build Files (Fail-safe) ==="
+    sudo -u ec2-user bash -c 'cd $HOME/megaticket && ( [ ! -f package.json ] && echo "Restoring package.json..." && cat << "EOF_PKG" > package.json
+{
+    "name": "mega-ticket",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "turbo run dev",
+        "dev:web": "turbo run dev --filter=web",
+        "dev:app": "turbo run dev --filter=app",
+        "build": "turbo run build",
+        "build:web": "turbo run build --filter=web",
+        "build:app": "turbo run build --filter=app",
+        "lint": "turbo run lint",
+        "clean": "turbo run clean",
+        "clean:force": "echo \"Warning: This may fail if files are locked.\" && turbo run clean --no-daemon && if exist node_modules rmdir /s /q node_modules",
+        "test-chatbot": "node diagnose_v7_9.js"
+    },
+    "devDependencies": {
+        "@aws-sdk/credential-providers": "^3.958.0",
+        "prettier": "^3.1.0",
+        "turbo": "^2.3.3",
+        "typescript": "^5.3.0"
+    },
+    "packageManager": "npm@10.2.5"
+}
+EOF_PKG
+) || true'
+
+    sudo -u ec2-user bash -c 'cd $HOME/megaticket && ( [ ! -f turbo.json ] && echo "Restoring turbo.json..." && cat << "EOF_TURBO" > turbo.json
+{
+    "$schema": "https://turbo.build/schema.json",
+    "globalDependencies": [
+        ".env"
+    ],
+    "tasks": {
+        "build": {
+            "dependsOn": [
+                "^build"
+            ],
+            "outputs": [
+                ".next/**",
+                "!.next/cache/**",
+                "dist/**"
+            ]
+        },
+        "dev": {
+            "cache": false,
+            "persistent": true
+        },
+        "clean": {
+            "cache": false
+        },
+        "lint": {}
+    }
+}
+EOF_TURBO
+) || true'
+
     
     # 7. 의존성 설치
     echo "=== Installing Dependencies ==="
