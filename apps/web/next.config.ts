@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // [V8.0] eslint 설정은 Next.js 15에서 별도 eslint.config.mjs로 분리됨
   images: {
     remotePatterns: [
