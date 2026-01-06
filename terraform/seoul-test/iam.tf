@@ -87,7 +87,8 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
           "dynamodb:Scan",
           "dynamodb:TransactWriteItems",
           "dynamodb:BatchWriteItem",
-          "dynamodb:BatchGetItem"
+          "dynamodb:BatchGetItem",
+          "dynamodb:DescribeTable"
         ]
         Resource = [
           "arn:aws:dynamodb:${var.aws_region}:626614672806:table/${var.dynamodb_table_prefix}-*",
