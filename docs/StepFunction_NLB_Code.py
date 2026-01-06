@@ -2,7 +2,9 @@
 # Step Function용 도쿄 DR NLB 생성 Lambda 코드
 # =============================================================================
 # 이 코드는 Step Function에서 DR Failover 시 NLB를 동적으로 생성합니다.
-# Lambda 함수로 배포하여 Step Function에서 호출합니다.
+# Terraform 수정 반영:
+# - Target Group, ASG 연결은 Terraform에서 관리
+# - Step Function은 NLB 생성 및 Listener 연결만 담당
 # =============================================================================
 
 import boto3
@@ -62,30 +64,18 @@ def create_nlb(event, context):
             ]
         )
         
-        # 3. Target Group 생성
-        print(f"Creating Target Group: {tg_name}")
-        tg_response = elbv2.create_target_group(
-            Name=tg_name,
-            Protocol="TCP",
-            Port=3001,
-            VpcId=VPC_ID,
-            TargetType="instance",
-            HealthCheckEnabled=True,
-            HealthCheckProtocol="TCP",
-            HealthCheckPort="traffic-port",
-            HealthyThresholdCount=3,
-            UnhealthyThresholdCount=3,
-            HealthCheckIntervalSeconds=30,
-            Tags=[
-                {"Key": "Name", "Value": tg_name},
-                {"Key": "Environment", "Value": "DR"},
-                {"Key": "ManagedBy", "Value": "StepFunction"}
-            ]
+        # 3. Target Group 조회 (Terraform에서 이미 생성됨)
+        print(f"Retrieving Target Group ARN: {tg_name}")
+        tg_response = elbv2.describe_target_groups(
+            Names=[tg_name]
         )
+        if not tg_response["TargetGroups"]:
+            raise ValueError(f"Target Group not found: {tg_name}")
+            
         tg_arn = tg_response["TargetGroups"][0]["TargetGroupArn"]
-        print(f"Target Group created: {tg_arn}")
+        print(f"Target Group found: {tg_arn}")
         
-        # 4. NLB Listener 생성 (TCP 3001)
+        # 4. NLB Listener 생성 (TCP 3001) 및 기존 TG 연결
         print("Creating NLB Listener on port 3001")
         elbv2.create_listener(
             LoadBalancerArn=nlb_arn,
@@ -116,6 +106,7 @@ def create_nlb(event, context):
             Overwrite=True,
             Description="도쿄 DR NLB DNS Name (Step Function에서 생성)"
         )
+        # TG ARN도 저장해두지만, cleanup 시 참조용 (삭제는 안 함)
         ssm.put_parameter(
             Name=f"/{PROJECT_NAME}/DR/NLB_TG_ARN",
             Value=tg_arn,
@@ -138,38 +129,7 @@ def create_nlb(event, context):
         raise e
 
 
-def attach_asg_to_nlb(event, context):
-    """
-    App ASG에 NLB Target Group을 연결하는 Lambda 함수
-    Step Function에서 NLB 생성 후 호출
-    
-    Args:
-        event: {"target_group_arn": "arn:aws:elasticloadbalancing:..."}
-    """
-    autoscaling = boto3.client("autoscaling", region_name=REGION)
-    
-    asg_name = f"{PROJECT_NAME}-DR-App-ASG"
-    tg_arn = event.get("target_group_arn")
-    
-    if not tg_arn:
-        raise ValueError("target_group_arn is required")
-    
-    try:
-        print(f"Attaching Target Group to ASG: {asg_name}")
-        autoscaling.attach_load_balancer_target_groups(
-            AutoScalingGroupName=asg_name,
-            TargetGroupARNs=[tg_arn]
-        )
-        print("ASG attached to NLB Target Group successfully")
-        
-        return {
-            "asg_name": asg_name,
-            "target_group_arn": tg_arn,
-            "status": "SUCCESS"
-        }
-    except Exception as e:
-        print(f"Error attaching ASG to NLB: {str(e)}")
-        raise e
+# attach_asg_to_nlb 함수는 Terraform이 관리하므로 삭제됨
 
 
 def update_web_launch_template(event, context):
@@ -249,10 +209,8 @@ def delete_nlb(event, context):
     """
     elbv2 = boto3.client("elbv2", region_name=REGION)
     ssm = boto3.client("ssm", region_name=REGION)
-    autoscaling = boto3.client("autoscaling", region_name=REGION)
     
     nlb_name = f"{PROJECT_NAME}-DR-NLB"
-    asg_name = f"{PROJECT_NAME}-DR-App-ASG"
     
     try:
         # 1. NLB ARN 조회
@@ -263,44 +221,20 @@ def delete_nlb(event, context):
         
         nlb_arn = response["LoadBalancers"][0]["LoadBalancerArn"]
         
-        # 2. Target Group ARN 조회
-        tg_arn = None
-        try:
-            tg_arn = ssm.get_parameter(Name=f"/{PROJECT_NAME}/DR/NLB_TG_ARN")["Parameter"]["Value"]
-        except ssm.exceptions.ParameterNotFound:
-            pass
-        
-        # 3. ASG에서 Target Group 분리
-        if tg_arn:
-            try:
-                autoscaling.detach_load_balancer_target_groups(
-                    AutoScalingGroupName=asg_name,
-                    TargetGroupARNs=[tg_arn]
-                )
-                print(f"Detached Target Group from ASG")
-            except Exception as e:
-                print(f"Warning: Could not detach TG from ASG: {str(e)}")
-        
-        # 4. Listener 삭제
+        # 2. Listener 삭제
         listeners = elbv2.describe_listeners(LoadBalancerArn=nlb_arn)
         for listener in listeners["Listeners"]:
             elbv2.delete_listener(ListenerArn=listener["ListenerArn"])
             print(f"Deleted listener: {listener['ListenerArn']}")
         
-        # 5. NLB 삭제
+        # 3. NLB 삭제
         elbv2.delete_load_balancer(LoadBalancerArn=nlb_arn)
         print(f"Deleted NLB: {nlb_name}")
         
-        # 6. Target Group 삭제 (NLB 삭제 후 약간의 대기 필요)
-        if tg_arn:
-            time.sleep(10)  # NLB 삭제 완료 대기
-            try:
-                elbv2.delete_target_group(TargetGroupArn=tg_arn)
-                print(f"Deleted Target Group: {tg_arn}")
-            except Exception as e:
-                print(f"Warning: Could not delete TG: {str(e)}")
+        # 4. Target Group 삭제 생략 (Terraform 관리)
+        # Terraform이 관리하므로 삭제하지 않음. ASG Detach도 불필요 (Terraform 연결 유지)
         
-        # 7. SSM Parameter 정리
+        # 5. SSM Parameter 정리
         for param_name in [f"/{PROJECT_NAME}/DR/NLB_DNS", f"/{PROJECT_NAME}/DR/NLB_TG_ARN"]:
             try:
                 ssm.delete_parameter(Name=param_name)
@@ -319,20 +253,13 @@ def delete_nlb(event, context):
 # =============================================================================
 STEP_FUNCTION_DEFINITION = """
 {
-  "Comment": "도쿄 DR Failover - NLB 동적 생성 및 ASG 연결",
+  "Comment": "도쿄 DR Failover - NLB 동적 생성 (TG 및 ASG 연결은 Terraform 관리)",
   "StartAt": "CreateNLB",
   "States": {
     "CreateNLB": {
       "Type": "Task",
       "Resource": "arn:aws:lambda:ap-northeast-1:ACCOUNT_ID:function:DR-CreateNLB",
       "ResultPath": "$.nlb",
-      "Next": "AttachASGToNLB"
-    },
-    "AttachASGToNLB": {
-      "Type": "Task",
-      "Resource": "arn:aws:lambda:ap-northeast-1:ACCOUNT_ID:function:DR-AttachASGToNLB",
-      "InputPath": "$.nlb",
-      "ResultPath": "$.asg_attach",
       "Next": "UpdateWebLaunchTemplate"
     },
     "UpdateWebLaunchTemplate": {

@@ -4,6 +4,7 @@ set -e
 # 로그 파일 설정
 exec > >(tee /var/log/user-data.log|logger -t user-data -s 2>/dev/console) 2>&1
 echo "=== User Data Script Started: $(date) ==="
+# FORCE UPDATE CHECK: APP USER DATA
 
 # 사용자 설정 (ec2-user로 실행)
 USER_HOME=/home/ec2-user

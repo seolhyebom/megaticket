@@ -123,8 +123,8 @@ resource "aws_autoscaling_group" "app" {
   max_size            = var.app_asg_max
   desired_capacity    = var.app_asg_desired
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = []  # Step Function에서 NLB TG 생성 후 연결
-  health_check_type   = "EC2"  # NLB 없이 시작하므로 EC2 헬스체크 사용
+  target_group_arns   = [aws_lb_target_group.app_nlb.arn]
+  health_check_type   = "EC2"
   health_check_grace_period = 300
 
   launch_template {
