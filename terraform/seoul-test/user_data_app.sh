@@ -67,15 +67,16 @@ chown ec2-user:ec2-user /home/ec2-user/.bashrc
 echo "=== Building App ==="
 sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && npm run build:app"
 
-# 10. PM2로 App 서비스 시작 (Inline 환경변수 사용 - User Data Guide 준수)
+# 10. PM2로 App 서비스 시작 (Inline 환경변수 사용)
 echo "=== Starting App Service with PM2 ==="
 sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/app && \
+PORT=3001 \
 AWS_REGION=${aws_region} \
 DYNAMODB_RESERVATIONS_TABLE=${dynamodb_table_prefix}-reservations \
 DYNAMODB_PERFORMANCES_TABLE=${dynamodb_table_prefix}-performances \
-echo 'DYNAMODB_VENUES_TABLE=${dynamodb_table_prefix}-venues' >> .env.production && \
-echo 'DYNAMODB_SCHEDULES_TABLE=${dynamodb_table_prefix}-schedules' >> .env.production && \
-pm2 start node --name 'app-backend' -- .next/standalone/apps/app/server.js"
+DYNAMODB_VENUES_TABLE=${dynamodb_table_prefix}-venues \
+DYNAMODB_SCHEDULES_TABLE=${dynamodb_table_prefix}-schedules \
+pm2 start npm --name 'app-backend' -- start"
 
 # 11. PM2 저장 및 startup 설정
 echo "=== Setting up PM2 Startup ==="

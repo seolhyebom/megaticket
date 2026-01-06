@@ -70,7 +70,7 @@ echo "=== Starting Web Service with PM2 ==="
 sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket/apps/web && \
 echo 'AWS_REGION=${aws_region}' > .env.production && \
 echo 'INTERNAL_API_URL=http://${nlb_dns_name}:3001' >> .env.production && \
-pm2 start node --name 'web-frontend' -- .next/standalone/apps/web/server.js"
+AWS_REGION=${aws_region} INTERNAL_API_URL=http://${nlb_dns_name}:3001 pm2 start npm --name 'web-frontend' -- start"
 
 # 11. PM2 저장 및 startup 설정
 echo "=== Setting up PM2 Startup ==="

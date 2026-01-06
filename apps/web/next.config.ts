@@ -3,7 +3,6 @@ import type { NextConfig } from "next";
 const INTERNAL_API_URL = process.env.INTERNAL_API_URL || 'http://localhost:3001';
 
 const nextConfig: NextConfig = {
-  output: 'standalone',
   transpilePackages: ['@mega-ticket/shared-types', '@mega-ticket/shared-utils'],
   async rewrites() {
     const apiUrl = process.env.INTERNAL_API_URL || 'http://localhost:3001';
