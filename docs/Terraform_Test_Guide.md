@@ -174,3 +174,5 @@ pm2 restart all --update-env
 
 
 로그 확인: 새 인스턴스가 생성되면 다시 한번 tail -f /var/log/user-data.log
+
+로그 명령어: pm2 logs --err --lines 100
