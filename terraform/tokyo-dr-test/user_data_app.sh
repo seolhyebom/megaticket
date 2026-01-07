@@ -34,10 +34,6 @@ ENVEOF"
 echo "=== .env.production contents ==="
 cat /home/ec2-user/megaticket/apps/app/.env.production
 
-# App 재빌드 (환경변수 반영)
-echo "=== Rebuilding App ==="
-sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && npm run build:app"
-
 # PM2 재시작 - 환경변수를 명시적으로 주입하여 start
 echo "=== Restarting App Backend ==="
 sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 delete app-backend || true'

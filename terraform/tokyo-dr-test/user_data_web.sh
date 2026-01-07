@@ -24,10 +24,6 @@ ENVEOF"
 echo "=== .env.production contents ==="
 cat /home/ec2-user/megaticket/apps/web/.env.production
 
-# Web 앱 재빌드 (환경변수 반영 - NEXT_PUBLIC_* 는 빌드 시점에 bake-in)
-echo "=== Rebuilding Web App ==="
-sudo -u ec2-user bash -c "source \$HOME/.nvm/nvm.sh && cd \$HOME/megaticket && AWS_REGION=${aws_region} NEXT_PUBLIC_AWS_REGION=${aws_region} INTERNAL_API_URL=${internal_api_url} npm run build:web"
-
 # PM2 재시작 - 환경변수 명시적 주입
 echo "=== Restarting Web Frontend ==="
 sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && pm2 delete web-frontend || true'
