@@ -1,49 +1,15 @@
 # =============================================================================
-# EC2 Instances with Auto Scaling - Seoul Test
+# EC2 Instances with Auto Scaling - Seoul Main Region (V3.0)
 # =============================================================================
-# Web, App 인스턴스 모두 Private Subnet에 배치
-# user_data를 통해 Git, Node.js, PM2 설치 → 소스 복제 → 빌드 → 서비스 시작 자동화
+# Web: S3 정적 호스팅으로 이전 (EC2 제거)
+# App: ASG + ALB Target Group 연결
 # =============================================================================
-
-# -----------------------------------------------------------------------------
-# Launch Template - Web (Private Subnet)
-# -----------------------------------------------------------------------------
-resource "aws_launch_template" "web" {
-  name_prefix   = "${var.project_name}-Web-LT-"
-  image_id      = var.base_ami_id
-  instance_type = var.instance_type
-  key_name      = var.key_pair_name
-
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ec2_profile.name
-  }
-
-  vpc_security_group_ids = [aws_security_group.web.id]
-
-  # User Data - 전체 설치 및 서비스 시작 자동화 (외부 스크립트 파일 사용)
-  user_data = base64encode(templatefile("${path.module}/user_data_web.sh", {
-    github_repo  = var.github_repo
-    aws_region   = var.aws_region
-    nlb_dns_name = aws_lb.nlb.dns_name
-  }))
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.project_name}-Web"
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
 
 # -----------------------------------------------------------------------------
 # Launch Template - App (Private Subnet)
 # -----------------------------------------------------------------------------
 resource "aws_launch_template" "app" {
-  name_prefix   = "${var.project_name}-App-LT-"
+  name_prefix   = "${var.project_name}-lt-app-${var.region_code}-"
   image_id      = var.base_ami_id
   instance_type = var.instance_type
   key_name      = var.key_pair_name
@@ -54,7 +20,7 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
-  # User Data - 전체 설치 및 서비스 시작 자동화 (외부 스크립트 파일 사용)
+  # User Data - App 서버 초기화, 서비스 시작
   user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
     project_name          = var.project_name
     aws_region            = var.aws_region
@@ -62,11 +28,12 @@ resource "aws_launch_template" "app" {
     github_repo           = var.github_repo
   }))
 
-
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "${var.project_name}-App"
+      Name   = "${var.project_name}-app-${var.region_code}"
+      Tier   = "app"
+      Backup = "true"
     }
   }
 
@@ -76,47 +43,18 @@ resource "aws_launch_template" "app" {
 }
 
 # -----------------------------------------------------------------------------
-# Auto Scaling Group - Web (Private Subnet)
-# -----------------------------------------------------------------------------
-resource "aws_autoscaling_group" "web" {
-  name                = "${var.project_name}-Web-ASG"
-  min_size            = var.web_asg_min
-  max_size            = var.web_asg_max
-  desired_capacity    = var.web_asg_desired
-  vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
-  health_check_grace_period = 600  # 빌드 시간 고려하여 10분
-
-  launch_template {
-    id      = aws_launch_template.web.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "${var.project_name}-Web"
-    propagate_at_launch = true
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# -----------------------------------------------------------------------------
 # Auto Scaling Group - App (Private Subnet)
-# NLB TG만 연결 - ALB 직접 접근 차단 (Next.js rewrites로 프록시)
+# ALB Target Group 연결 (NLB 제거됨)
 # -----------------------------------------------------------------------------
 resource "aws_autoscaling_group" "app" {
-  name                = "${var.project_name}-App-ASG"
+  name                = "${var.project_name}-asg-app-${var.region_code}"
   min_size            = var.app_asg_min
   max_size            = var.app_asg_max
   desired_capacity    = var.app_asg_desired
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = [aws_lb_target_group.app_nlb.arn]  # NLB TG만 연결
+  target_group_arns   = [aws_lb_target_group.app.arn]
   health_check_type   = "ELB"
-  health_check_grace_period = 600  # 빌드 시간 고려하여 10분
+  health_check_grace_period = 600
 
   launch_template {
     id      = aws_launch_template.app.id
@@ -125,7 +63,13 @@ resource "aws_autoscaling_group" "app" {
 
   tag {
     key                 = "Name"
-    value               = "${var.project_name}-App"
+    value               = "${var.project_name}-app-${var.region_code}"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Tier"
+    value               = "app"
     propagate_at_launch = true
   }
 

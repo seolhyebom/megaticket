@@ -1,42 +1,46 @@
 # =============================================================================
-# Application Load Balancer - Seoul Test
+# Application Load Balancer - Seoul Main Region (V3.0)
+# =============================================================================
+# Web: S3 정적 호스팅으로 이전 (Web TG 제거)
+# App: ALB → App EC2 직접 연결
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # ALB (Public Subnet에 배치)
 # -----------------------------------------------------------------------------
 resource "aws_lb" "main" {
-  name               = "${var.project_name}-ALB"
+  name               = "${var.project_name}-alb-${var.region_code}"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
   subnets            = [aws_subnet.public_a.id, aws_subnet.public_c.id]
 
   tags = {
-    Name = "${var.project_name}-ALB"
+    Name = "${var.project_name}-alb-${var.region_code}"
   }
 }
 
 # -----------------------------------------------------------------------------
-# Target Group - Web (Port 3000)
+# Target Group - App (Port 3001)
 # -----------------------------------------------------------------------------
-resource "aws_lb_target_group" "web" {
-  name     = "${var.project_name}-Web-TG"
-  port     = 3000
+resource "aws_lb_target_group" "app" {
+  name     = "${var.project_name}-tg-app-${var.region_code}"
+  port     = 3001
   protocol = "HTTP"
   vpc_id   = aws_vpc.main.id
 
   health_check {
-    path                = "/"
+    path                = "/api/health"
     healthy_threshold   = 2
     unhealthy_threshold = 5
     timeout             = 5
     interval            = 30
-    matcher             = "200-399"
+    matcher             = "200"
   }
 
   tags = {
-    Name = "${var.project_name}-Web-TG"
+    Name = "${var.project_name}-tg-app-${var.region_code}"
+    Tier = "app"
   }
 }
 
@@ -60,7 +64,7 @@ resource "aws_lb_listener" "http" {
 }
 
 # -----------------------------------------------------------------------------
-# ALB Listener - HTTPS (Port 443)
+# ALB Listener - HTTPS (Port 443) → App Target Group
 # -----------------------------------------------------------------------------
 resource "aws_lb_listener" "https" {
   load_balancer_arn = aws_lb.main.arn
@@ -71,14 +75,6 @@ resource "aws_lb_listener" "https" {
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.web.arn
+    target_group_arn = aws_lb_target_group.app.arn
   }
 }
-
-# -----------------------------------------------------------------------------
-# ⚠️ ALB App TG 및 API 리스너 규칙 제거됨
-# -----------------------------------------------------------------------------
-# Next.js rewrites로 /api/* 요청이 INTERNAL_API_URL (NLB)로 프록시됨
-# 따라서 ALB에서 직접 App으로 전달할 필요 없음
-# App은 NLB를 통해서만 접근 가능 (Web → NLB → App)
-# -----------------------------------------------------------------------------

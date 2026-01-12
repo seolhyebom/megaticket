@@ -1,12 +1,15 @@
 # =============================================================================
-# Security Groups - Seoul Test
+# Security Groups - Seoul Main Region (V3.0)
+# =============================================================================
+# Web SG 제거 (S3로 이전)
+# ALB SG → App SG 직접 연결
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # ALB Security Group
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-ALB-SG"
+  name        = "${var.project_name}-sg-alb-${var.region_code}"
   description = "Security group for Application Load Balancer"
   vpc_id      = aws_vpc.main.id
 
@@ -26,6 +29,7 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  # Egress는 모든 아웃바운드 허용 (순환 참조 방지)
   egress {
     from_port   = 0
     to_port     = 0
@@ -34,42 +38,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name = "${var.project_name}-ALB-SG"
-  }
-}
-
-# -----------------------------------------------------------------------------
-# NLB Security Group (NLB는 보안 그룹이 없지만 대상 그룹용으로 정의)
-# -----------------------------------------------------------------------------
-# NLB 자체는 Security Group을 사용하지 않음
-# 대신 App 인스턴스에서 NLB 트래픽을 허용해야 함
-
-# -----------------------------------------------------------------------------
-# Web Instance Security Group (Private Subnet)
-# -----------------------------------------------------------------------------
-resource "aws_security_group" "web" {
-  name        = "${var.project_name}-Web-SG"
-  description = "Security group for Web instances"
-  vpc_id      = aws_vpc.main.id
-
-  ingress {
-    description     = "Web Port from ALB"
-    from_port       = 3000
-    to_port         = 3000
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-  }
-
-  # SSM Session Manager용 아웃바운드
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "${var.project_name}-Web-SG"
+    Name = "${var.project_name}-sg-alb-${var.region_code}"
   }
 }
 
@@ -77,7 +46,7 @@ resource "aws_security_group" "web" {
 # App Instance Security Group (Private Subnet)
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "app" {
-  name        = "${var.project_name}-App-SG"
+  name        = "${var.project_name}-sg-app-${var.region_code}"
   description = "Security group for App instances"
   vpc_id      = aws_vpc.main.id
 
@@ -90,24 +59,7 @@ resource "aws_security_group" "app" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  # Web 인스턴스에서 오는 내부 API 요청
-  ingress {
-    description     = "API Port from Web instances"
-    from_port       = 3001
-    to_port         = 3001
-    protocol        = "tcp"
-    security_groups = [aws_security_group.web.id]
-  }
-
-  # NLB에서 오는 트래픽 (NLB는 클라이언트 IP를 유지하므로 VPC CIDR 허용)
-  ingress {
-    description = "API Port from NLB (VPC CIDR)"
-    from_port   = 3001
-    to_port     = 3001
-    protocol    = "tcp"
-    cidr_blocks = [var.vpc_cidr]
-  }
-
+  # SSM Session Manager 및 아웃바운드 (HTTPS, DynamoDB 등)
   egress {
     from_port   = 0
     to_port     = 0
@@ -116,6 +68,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "${var.project_name}-App-SG"
+    Name = "${var.project_name}-sg-app-${var.region_code}"
+    Tier = "app"
   }
 }

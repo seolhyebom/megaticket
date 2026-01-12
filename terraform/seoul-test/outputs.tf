@@ -1,5 +1,5 @@
 # =============================================================================
-# Outputs - Seoul Test
+# Outputs - Seoul Main Region (V3.0)
 # =============================================================================
 
 output "vpc_id" {
@@ -12,19 +12,14 @@ output "alb_dns_name" {
   value       = aws_lb.main.dns_name
 }
 
-output "nlb_dns_name" {
-  description = "NLB DNS Name"
-  value       = aws_lb.nlb.dns_name
-}
-
-output "web_asg_name" {
-  description = "Web Auto Scaling Group Name"
-  value       = aws_autoscaling_group.web.name
-}
-
 output "app_asg_name" {
   description = "App Auto Scaling Group Name"
   value       = aws_autoscaling_group.app.name
+}
+
+output "app_target_group_arn" {
+  description = "App Target Group ARN"
+  value       = aws_lb_target_group.app.arn
 }
 
 output "private_subnet_ids" {
@@ -42,45 +37,34 @@ output "ec2_iam_role_arn" {
   value       = aws_iam_role.ec2_role.arn
 }
 
-output "web_security_group_id" {
-  description = "Web Security Group ID"
-  value       = aws_security_group.web.id
-}
-
 output "app_security_group_id" {
   description = "App Security Group ID"
   value       = aws_security_group.app.id
 }
 
 # =============================================================================
-# GoldenAMI 생성 후 확인용 정보
+# V3.0 배포 후 확인용 정보
 # =============================================================================
 output "instructions" {
   description = "다음 단계 안내"
   value       = <<-EOT
     
     ============================================================
-    서울 리전 인프라가 생성되었습니다!
+    서울 리전 인프라 (V3.0) 배포 완료!
     ============================================================
     
-    1. ALB DNS로 접속하여 서비스 동작 확인:
-       http://${aws_lb.main.dns_name}
+    1. ALB DNS로 API 헬스체크:
+       https://${aws_lb.main.dns_name}/api/health
     
-    2. API 헬스체크:
-       http://${aws_lb.main.dns_name}/api/health
-    
-    3. 인스턴스 상태 확인 (SSM으로 접속):
+    2. SSM으로 App 인스턴스 접속 후 확인:
        - pm2 list
        - pm2 logs
     
-    4. GoldenAMI 생성:
-       - EC2 콘솔 → 인스턴스 선택 → 작업 → 이미지 및 템플릿 → 이미지 생성
-       - Web AMI: MegaTicket-Web-GoldenAMI-YYYYMMDD
-       - App AMI: MegaTicket-App-GoldenAMI-YYYYMMDD
+    3. S3 정적 호스팅 설정:
+       - Web 빌드 → S3 업로드 → CloudFront 연결
     
-    5. AMI를 도쿄 리전으로 복사:
-       - EC2 → AMI → 선택 → 작업 → AMI 복사 → 대상 리전: ap-northeast-1
-    
+    ============================================================
+    PLCR Naming: ${var.project_name}-*-${var.region_code}
     ============================================================
   EOT
 }

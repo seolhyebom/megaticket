@@ -1,8 +1,8 @@
 # =============================================================================
-# MegaTicket Infrastructure - DR Tokyo Region (GoldenAMI 테스트용)
+# PLCR Infrastructure - Tokyo DR Region (V3.0)
 # =============================================================================
-# 목적: 서울 리전에서 복사한 GoldenAMI를 사용하여 DR 테스트
-# DB는 Global Table로 자동 복제되므로 생성하지 않음
+# Web: S3 정적 호스팅 (Terraform 외부)
+# App: EC2 ASG + ALB (Pilot Light: desired=0)
 # =============================================================================
 
 terraform {
@@ -22,15 +22,15 @@ provider "aws" {
   
   default_tags {
     tags = {
-      Project     = "MegaTicket"
-      Environment = "${var.environment}-DR"
-      ManagedBy   = "Terraform"
+      Project     = var.project_name
+      Environment = var.environment
+      ManagedBy   = "terraform"
     }
   }
 }
 
 # -----------------------------------------------------------------------------
-# VPC (Main과 다른 CIDR 사용: 10.1.0.0/16)
+# VPC
 # -----------------------------------------------------------------------------
 resource "aws_vpc" "dr" {
   cidr_block           = var.vpc_cidr
@@ -38,7 +38,7 @@ resource "aws_vpc" "dr" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${var.project_name}-DR-VPC"
+    Name = "${var.project_name}-vpc-${var.region_code}"
   }
 }
 
@@ -49,12 +49,12 @@ resource "aws_internet_gateway" "dr" {
   vpc_id = aws_vpc.dr.id
 
   tags = {
-    Name = "${var.project_name}-DR-IGW"
+    Name = "${var.project_name}-igw-${var.region_code}"
   }
 }
 
 # -----------------------------------------------------------------------------
-# Subnets - Public (ALB, NLB, NAT Gateway 배치용)
+# Subnets - Public (ALB, NAT Gateway 배치용)
 # -----------------------------------------------------------------------------
 resource "aws_subnet" "public_a" {
   vpc_id                  = aws_vpc.dr.id
@@ -63,8 +63,8 @@ resource "aws_subnet" "public_a" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-DR-Public-Subnet-A"
-    Type = "Public"
+    Name = "${var.project_name}-sbn-pub-${var.region_code}-a"
+    Tier = "pub"
   }
 }
 
@@ -75,13 +75,13 @@ resource "aws_subnet" "public_c" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-DR-Public-Subnet-C"
-    Type = "Public"
+    Name = "${var.project_name}-sbn-pub-${var.region_code}-c"
+    Tier = "pub"
   }
 }
 
 # -----------------------------------------------------------------------------
-# Subnets - Private (Web, App EC2 인스턴스 배치용)
+# Subnets - Private (App EC2 인스턴스 배치용)
 # -----------------------------------------------------------------------------
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.dr.id
@@ -89,8 +89,8 @@ resource "aws_subnet" "private_a" {
   availability_zone = "${var.aws_region}a"
 
   tags = {
-    Name = "${var.project_name}-DR-Private-Subnet-A"
-    Type = "Private"
+    Name = "${var.project_name}-sbn-pri-${var.region_code}-a"
+    Tier = "pri"
   }
 }
 
@@ -100,8 +100,8 @@ resource "aws_subnet" "private_c" {
   availability_zone = "${var.aws_region}c"
 
   tags = {
-    Name = "${var.project_name}-DR-Private-Subnet-C"
-    Type = "Private"
+    Name = "${var.project_name}-sbn-pri-${var.region_code}-c"
+    Tier = "pri"
   }
 }
 
@@ -112,7 +112,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.project_name}-DR-NAT-EIP"
+    Name = "${var.project_name}-eip-nat-${var.region_code}"
   }
 }
 
@@ -121,7 +121,7 @@ resource "aws_nat_gateway" "dr" {
   subnet_id     = aws_subnet.public_a.id
 
   tags = {
-    Name = "${var.project_name}-DR-NAT-GW"
+    Name = "${var.project_name}-nat-${var.region_code}"
   }
 
   depends_on = [aws_internet_gateway.dr]
@@ -139,7 +139,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.project_name}-DR-Public-RT"
+    Name = "${var.project_name}-rt-pub-${var.region_code}"
   }
 }
 
@@ -152,7 +152,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${var.project_name}-DR-Private-RT"
+    Name = "${var.project_name}-rt-pri-${var.region_code}"
   }
 }
 
@@ -187,6 +187,6 @@ resource "aws_vpc_endpoint" "dynamodb" {
   route_table_ids   = [aws_route_table.private.id]
 
   tags = {
-    Name = "${var.project_name}-DR-DynamoDB-Endpoint"
+    Name = "${var.project_name}-vpce-ddb-${var.region_code}"
   }
 }

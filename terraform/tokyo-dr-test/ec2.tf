@@ -1,61 +1,17 @@
 # =============================================================================
-# EC2 Instances with Auto Scaling - DR Tokyo
+# EC2 Instances with Auto Scaling - Tokyo DR Region (V3.0)
 # =============================================================================
-# GoldenAMI 사용 - user_data는 환경변수 변경 및 PM2 재시작만 수행
-# Web, App 모두 Private Subnet에 배치
-# ⚠️ AMI는 Step Function에서 관리 - image_id는 Step Function이 LT 업데이트 시 주입
+# Web: S3 정적 호스팅으로 이전 (EC2 제거)
+# App: ASG + ALB Target Group 연결 (Pilot Light: desired=0)
+# Golden AMI 사용 (빌드 스킵) - 서울에서 복사된 AMI
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# 기본 AMI 조회 (Launch Template 생성용 - Step Function이 나중에 GoldenAMI로 업데이트)
-# -----------------------------------------------------------------------------
-data "aws_ssm_parameter" "amazon_linux_2" {
-  name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
-}
-
-# -----------------------------------------------------------------------------
-# Launch Template - Web (Private Subnet, GoldenAMI 사용)
-# -----------------------------------------------------------------------------
-resource "aws_launch_template" "web" {
-  name_prefix   = "${var.project_name}-DR-Web-LT-"
-  image_id      = data.aws_ssm_parameter.amazon_linux_2.value  # 기본값, Step Function이 GoldenAMI로 업데이트
-  instance_type = var.instance_type
-  key_name      = var.key_pair_name
-
-  iam_instance_profile {
-    name = aws_iam_instance_profile.ec2_profile.name
-  }
-
-  vpc_security_group_ids = [aws_security_group.web.id]
-
-  # User Data - DR 환경변수 설정 및 PM2 재시작
-  # GoldenAMI에는 이미 모든 소프트웨어가 설치되어 있음
-  # Web User Data (Golden AMI용 - 환경변수 설정 및 재시작)
-  # ⚠️ NLB DNS는 Step Function에서 Launch Template 업데이트 시 주입
-  user_data = base64encode(templatefile("${path.module}/user_data_web.sh", {
-    aws_region       = var.aws_region
-    internal_api_url = "http://NLB_DNS_PLACEHOLDER:3001"  # Step Function이 실제 NLB DNS로 업데이트
-  }))
-
-  tag_specifications {
-    resource_type = "instance"
-    tags = {
-      Name = "${var.project_name}-DR-Web"
-    }
-  }
-
-  lifecycle {
-    create_before_destroy = true
-    ignore_changes        = [image_id]  # Step Function이 관리
-  }
-}
-
-# -----------------------------------------------------------------------------
-# Launch Template - App (Private Subnet, GoldenAMI 사용)
+# Launch Template - App (Private Subnet)
 # -----------------------------------------------------------------------------
 resource "aws_launch_template" "app" {
-  name_prefix   = "${var.project_name}-DR-App-LT-"
-  image_id      = data.aws_ssm_parameter.amazon_linux_2.value  # 기본값, Step Function이 GoldenAMI로 업데이트
+  name_prefix   = "${var.project_name}-lt-app-${var.region_code}-"
+  image_id      = var.base_ami_id  # Golden AMI 사용 (빌드 스킵)
   instance_type = var.instance_type
   key_name      = var.key_pair_name
 
@@ -65,7 +21,7 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
-  # App User Data (Golden AMI용 - 환경변수 설정 및 재시작)
+  # App User Data (DR 환경변수 설정)
   user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
     aws_region            = var.aws_region
     dynamodb_table_prefix = var.dynamodb_table_prefix
@@ -74,57 +30,29 @@ resource "aws_launch_template" "app" {
   tag_specifications {
     resource_type = "instance"
     tags = {
-      Name = "${var.project_name}-DR-App"
+      Name   = "${var.project_name}-app-${var.region_code}"
+      Tier   = "app"
+      Backup = "true"
     }
   }
 
   lifecycle {
     create_before_destroy = true
-    ignore_changes        = [image_id]  # Step Function이 관리
+    # ignore_changes = [image_id]  # 테스트 단계: Terraform으로 AMI 변경 적용
   }
 }
 
 # -----------------------------------------------------------------------------
-# Auto Scaling Group - Web (Private Subnet)
-# -----------------------------------------------------------------------------
-resource "aws_autoscaling_group" "web" {
-  name                = "${var.project_name}-DR-Web-ASG"
-  min_size            = var.web_asg_min
-  max_size            = var.web_asg_max
-  desired_capacity    = var.web_asg_desired
-  vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = [aws_lb_target_group.web.arn]
-  health_check_type   = "ELB"
-  health_check_grace_period = 300  # GoldenAMI 사용으로 빌드 불필요, 5분
-
-  launch_template {
-    id      = aws_launch_template.web.id
-    version = "$Latest"
-  }
-
-  tag {
-    key                 = "Name"
-    value               = "${var.project_name}-DR-Web"
-    propagate_at_launch = true
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-# -----------------------------------------------------------------------------
-# Auto Scaling Group - App (Private Subnet)
-# ⚠️ NLB TG는 Step Function에서 동적으로 연결
+# Auto Scaling Group - App (Private Subnet, Pilot Light)
 # -----------------------------------------------------------------------------
 resource "aws_autoscaling_group" "app" {
-  name                = "${var.project_name}-DR-App-ASG"
+  name                = "${var.project_name}-asg-app-${var.region_code}"
   min_size            = var.app_asg_min
   max_size            = var.app_asg_max
-  desired_capacity    = var.app_asg_desired
+  desired_capacity    = var.app_asg_desired  # Pilot Light: 0
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
-  target_group_arns   = [aws_lb_target_group.app_nlb.arn]
-  health_check_type   = "EC2"
+  target_group_arns   = [aws_lb_target_group.app.arn]
+  health_check_type   = "ELB"
   health_check_grace_period = 300
 
   launch_template {
@@ -134,7 +62,13 @@ resource "aws_autoscaling_group" "app" {
 
   tag {
     key                 = "Name"
-    value               = "${var.project_name}-DR-App"
+    value               = "${var.project_name}-app-${var.region_code}"
+    propagate_at_launch = true
+  }
+
+  tag {
+    key                 = "Tier"
+    value               = "app"
     propagate_at_launch = true
   }
 

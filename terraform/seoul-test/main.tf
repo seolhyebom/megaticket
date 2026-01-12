@@ -1,8 +1,8 @@
 # =============================================================================
-# MegaTicket Infrastructure - Seoul Region (GoldenAMI 생성 테스트용)
+# PLCR Infrastructure - Seoul Main Region (V3.0)
 # =============================================================================
-# 목적: 서울 리전에서 처음부터 배포하여 GoldenAMI를 생성하기 위한 테스트 인프라
-# DB는 이미 생성되어 있으므로 DynamoDB 관련 리소스는 포함하지 않음
+# Web: S3 정적 호스팅 (Terraform 외부)
+# App: EC2 ASG + ALB
 # =============================================================================
 
 terraform {
@@ -22,9 +22,9 @@ provider "aws" {
   
   default_tags {
     tags = {
-      Project     = "MegaTicket"
+      Project     = var.project_name
       Environment = var.environment
-      ManagedBy   = "Terraform"
+      ManagedBy   = "terraform"
     }
   }
 }
@@ -38,7 +38,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name = "${var.project_name}-VPC"
+    Name = "${var.project_name}-vpc-${var.region_code}"
   }
 }
 
@@ -49,7 +49,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name = "${var.project_name}-IGW"
+    Name = "${var.project_name}-igw-${var.region_code}"
   }
 }
 
@@ -63,8 +63,8 @@ resource "aws_subnet" "public_a" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-Public-Subnet-A"
-    Type = "Public"
+    Name = "${var.project_name}-sbn-pub-${var.region_code}-a"
+    Tier = "pub"
   }
 }
 
@@ -75,13 +75,13 @@ resource "aws_subnet" "public_c" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name = "${var.project_name}-Public-Subnet-C"
-    Type = "Public"
+    Name = "${var.project_name}-sbn-pub-${var.region_code}-c"
+    Tier = "pub"
   }
 }
 
 # -----------------------------------------------------------------------------
-# Subnets - Private (Web, App EC2 인스턴스 배치용)
+# Subnets - Private (App EC2 인스턴스 배치용)
 # -----------------------------------------------------------------------------
 resource "aws_subnet" "private_a" {
   vpc_id            = aws_vpc.main.id
@@ -89,8 +89,8 @@ resource "aws_subnet" "private_a" {
   availability_zone = "${var.aws_region}a"
 
   tags = {
-    Name = "${var.project_name}-Private-Subnet-A"
-    Type = "Private"
+    Name = "${var.project_name}-sbn-pri-${var.region_code}-a"
+    Tier = "pri"
   }
 }
 
@@ -100,8 +100,8 @@ resource "aws_subnet" "private_c" {
   availability_zone = "${var.aws_region}c"
 
   tags = {
-    Name = "${var.project_name}-Private-Subnet-C"
-    Type = "Private"
+    Name = "${var.project_name}-sbn-pri-${var.region_code}-c"
+    Tier = "pri"
   }
 }
 
@@ -112,7 +112,7 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name = "${var.project_name}-NAT-EIP"
+    Name = "${var.project_name}-eip-nat-${var.region_code}"
   }
 }
 
@@ -121,7 +121,7 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public_a.id
 
   tags = {
-    Name = "${var.project_name}-NAT-GW"
+    Name = "${var.project_name}-nat-${var.region_code}"
   }
 
   depends_on = [aws_internet_gateway.main]
@@ -139,7 +139,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name = "${var.project_name}-Public-RT"
+    Name = "${var.project_name}-rt-pub-${var.region_code}"
   }
 }
 
@@ -152,7 +152,7 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name = "${var.project_name}-Private-RT"
+    Name = "${var.project_name}-rt-pri-${var.region_code}"
   }
 }
 
@@ -187,6 +187,6 @@ resource "aws_vpc_endpoint" "dynamodb" {
   route_table_ids   = [aws_route_table.private.id]
 
   tags = {
-    Name = "${var.project_name}-DynamoDB-Endpoint"
+    Name = "${var.project_name}-vpce-ddb-${var.region_code}"
   }
 }

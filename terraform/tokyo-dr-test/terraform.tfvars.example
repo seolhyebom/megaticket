@@ -38,4 +38,4 @@ app_asg_desired = 1
 dynamodb_table_prefix = "KDT-Msp4-PLDR"
 
 # 도메인
-domain_name = "pilotlight-test.click"
+domain_name = "megaticket.click"
