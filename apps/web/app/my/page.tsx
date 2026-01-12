@@ -2,21 +2,21 @@
 
 import { Suspense, useEffect, useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { Reservation, ReservationCard } from "@/components/reservation-card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Ticket, Loader2 } from "lucide-react"
+import { getAwsRegion } from "@/lib/runtime-config"
 
 function MyPageContent() {
     const { user, isLoading } = useAuth()
     const router = useRouter()
-    const searchParams = useSearchParams()  // V7.18: URL 쿼리에서 region 우선 사용
     const [reservations, setReservations] = useState<Reservation[]>([])
     const [fetching, setFetching] = useState(true)
 
-    // V7.18: URL 쿼리 > 환경변수 > 기본값 순으로 리전 결정
-    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2'
+    // V9.0: config.js의 getAwsRegion() 사용 (URL 파라미터 제거)
+    const region = getAwsRegion()
 
     useEffect(() => {
         // Redirect if not logged in

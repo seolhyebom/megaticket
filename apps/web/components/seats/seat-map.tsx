@@ -14,6 +14,8 @@ import { parsePriceString } from "@/lib/utils"
 // Mock import for now - in real app fetch from API
 // import sampleTheater from "@/data/venues/charlotte-theater.json"
 
+import { Performance } from "@mega-ticket/shared-types"
+
 interface SeatMapProps {
     performanceId: string;
     date: string;
@@ -21,9 +23,10 @@ interface SeatMapProps {
     isSubmitting: boolean;
     onSelectionComplete: (selectedSeats: Seat[], totalPrice: number) => void;
     onLoadComplete?: () => void;
+    performance?: Performance | null;  // 부모에서 전달받은 공연 정보 (중복 API 호출 방지)
 }
 
-export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionComplete, onLoadComplete }: SeatMapProps) {
+export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionComplete, onLoadComplete, performance: propPerformance }: SeatMapProps) {
     const [venueData, setVenueData] = useState<VenueData | null>(null)
     const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([])
     const [selectedFloor, setSelectedFloor] = useState<string>("1층")
@@ -34,17 +37,22 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
     // Request ID for race condition protection
     const lastRequestIdRef = useRef<number>(0);
     const onLoadCompleteRef = useRef(onLoadComplete);
+    // API 중복 호출 방지
+    const hasFetchedRef = useRef(false);
 
     useEffect(() => {
         onLoadCompleteRef.current = onLoadComplete;
     }, [onLoadComplete]);
 
-    const fetchVenueData = useCallback(async (silent = false) => {
+    const fetchVenueData = useCallback(async (silent = false, force = false) => {
+        // 강제 호출이 아니고 이미 호출된 경우 스킵
+        if (!force && hasFetchedRef.current) return;
+        hasFetchedRef.current = true;
         const requestId = ++lastRequestIdRef.current;
         if (!silent) setLoading(true)
         try {
-            // 1. Get Performance to find venueId
-            const performance = await apiClient.getPerformance(performanceId);
+            // 1. Get Performance - 부모에서 전달받은 경우 재사용, 없으면 API 호출
+            const performance = propPerformance || await apiClient.getPerformance(performanceId);
             const venueId = performance.venueId || 'charlotte-theater';
 
             // 2. Fetch Base Venue Data from API
@@ -167,16 +175,19 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
                 }
             }
         }
-    }, [performanceId, date, time])
+    }, [performanceId, date, time, propPerformance])
 
     useEffect(() => {
+        // performanceId가 없으면 스킵
+        if (!performanceId) return;
+
         fetchVenueData(false);
 
         // V7.15: 3초 자동 Polling 비활성화 (DB 비용 절감)
         // 테스트 시 아래 주석 해제하여 사용 가능
         /*
         const interval = setInterval(() => {
-            fetchVenueData(true);
+            fetchVenueData(true, true);  // force=true for polling
         }, 3000);
         */
 
@@ -184,7 +195,7 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
         const handleRefresh = () => {
             // Add small delay to ensure server write completes
             setTimeout(() => {
-                fetchVenueData(true);
+                fetchVenueData(true, true);  // force=true for manual refresh
             }, 50);
         };
         window.addEventListener('REFRESH_SEAT_MAP', handleRefresh);
@@ -193,7 +204,8 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
             // clearInterval(interval);  // V7.15: Polling 비활성화로 주석 처리
             window.removeEventListener('REFRESH_SEAT_MAP', handleRefresh);
         }
-    }, [fetchVenueData])
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [performanceId, date, time])  // 함수 참조 대신 primitive 값만 의존성에 포함
 
     useEffect(() => {
         if (showMaxAlert) {
@@ -294,7 +306,7 @@ export function SeatMap({ performanceId, date, time, isSubmitting, onSelectionCo
                     size="sm"
                     variant="secondary"
                     className="absolute right-4 top-1/2 -translate-y-1/2 h-8 text-xs font-medium bg-white/90 hover:bg-white text-gray-800 gap-1.5 transition-all active:scale-95"
-                    onClick={() => fetchVenueData(false)}
+                    onClick={() => fetchVenueData(false, true)}  // force=true for manual refresh
                     disabled={loading || isSubmitting}
                 >
                     <RotateCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />

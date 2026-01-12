@@ -5,9 +5,10 @@ import React from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { CalendarDays, MapPin, Ticket, Clock, CreditCard, AlertTriangle } from "lucide-react"
 import { parseSeatId, calculateGlobalSeatNumber, SectionData } from "@mega-ticket/shared-types"
+import { getAwsRegion } from "@/lib/runtime-config"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -62,11 +63,10 @@ export function ReservationCard({ reservation, onCancel, onDelete, onRemoveFromL
     const [isDeleting, setIsDeleting] = React.useState(false)  // V7.14
     const [showExpiredDialog, setShowExpiredDialog] = React.useState(false)  // V7.19: 만료 AlertDialog
 
-    // [Navigation] Get current region to preserve it
-    const searchParams = useSearchParams()
+    // [Navigation] V9.0: config.js의 getAwsRegion() 사용 (URL 파라미터 제거)
     const router = useRouter()  // V7.19: 결제 페이지 이동용
-    const region = searchParams.get("region") || process.env.NEXT_PUBLIC_AWS_REGION || "ap-northeast-2"
-    const detailsUrl = `/performances/${reservation.performanceId}?region=${region}`
+    const region = getAwsRegion()
+    const detailsUrl = `/performances/${reservation.performanceId}`
 
     const executeCancel = async () => {
         if (!onCancel) return

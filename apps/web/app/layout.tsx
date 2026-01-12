@@ -1,6 +1,7 @@
 
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import Script from "next/script";
 import React, { Suspense } from "react";
 import { AuthProvider } from "@/contexts/auth-context";
 import { SiteHeader } from "@/components/site-header";
@@ -29,6 +30,8 @@ export default function RootLayout({
         suppressHydrationWarning
         className={`${inter.variable} antialiased min-h-screen flex flex-col font-sans bg-background text-foreground`}
       >
+        {/* 런타임 Config - 다른 스크립트보다 먼저 로드 */}
+        <Script src="/config.js" strategy="beforeInteractive" />
         <AuthProvider>
           <SiteHeader />
           <main className="flex-1 flex flex-col">

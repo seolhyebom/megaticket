@@ -1,4 +1,4 @@
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ActionButton } from '../types/chat';
 
 interface UseChatActionsProps {
@@ -8,8 +8,6 @@ interface UseChatActionsProps {
 
 export function useChatActions({ sendMessage, onActionTriggered }: UseChatActionsProps) {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2';
 
     const handleAction = (action: ActionButton) => {
         if (action.disabled) return;
@@ -57,7 +55,7 @@ export function useChatActions({ sendMessage, onActionTriggered }: UseChatAction
                 };
                 const message = labelMap[action.label];
                 if (message === 'NAVIGATE_MY_PAGE') {
-                    router.push(`/my?region=${region}`);
+                    router.push('/my');
                     return;
                 }
                 if (message) {
@@ -82,17 +80,17 @@ export function useChatActions({ sendMessage, onActionTriggered }: UseChatAction
 
                 case 'select_performance':
                     if (action.data?.performanceId) {
-                        router.push(`/chat?region=${region}&performanceId=${action.data.performanceId}`);
+                        router.push(`/chat?performanceId=${action.data.performanceId}`);
                     }
                     break;
                 case 'select_schedule':
                     if (action.data?.performanceId && action.data?.date) {
-                        router.push(`/chat?region=${region}&performanceId=${action.data.performanceId}&date=${action.data.date}`);
+                        router.push(`/chat?performanceId=${action.data.performanceId}&date=${action.data.date}`);
                     }
                     break;
                 case 'book_seat':
                     if (action.data?.performanceId && action.data?.date && action.data?.time) {
-                        router.push(`/chat?region=${region}&performanceId=${action.data.performanceId}&date=${action.data.date}&time=${action.data.time}`);
+                        router.push(`/chat?performanceId=${action.data.performanceId}&date=${action.data.date}&time=${action.data.time}`);
                     }
                     break;
 
@@ -108,7 +106,6 @@ export function useChatActions({ sendMessage, onActionTriggered }: UseChatAction
                         if (date) params.append('date', date);
                         if (time) params.append('time', time);
                         if (scheduleId) params.append('scheduleId', scheduleId);
-                        params.append('region', region);
 
                         if (params.toString()) {
                             url += `?${params.toString()}`;
@@ -120,7 +117,7 @@ export function useChatActions({ sendMessage, onActionTriggered }: UseChatAction
 
                 case 'view_reservation':
                 case 'navigate_my_page': // [V7.12] 예약 보기 버튼 액션
-                    router.push(`/my?region=${region}`);
+                    router.push('/my');
                     break;
 
                 default:

@@ -1,22 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // S3 정적 호스팅을 위한 Static Export 설정
+  output: 'export',
+  trailingSlash: true,
+
   transpilePackages: ['@mega-ticket/shared-types', '@mega-ticket/shared-utils'],
-  // rewrites()는 빌드 시점에 고정되므로 제거
-  // /api/* 요청은 app/api/[...path]/route.ts에서 런타임 프록시로 처리
   typescript: {
     ignoreBuildErrors: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // Static Export에서는 Image Optimization 사용 불가
   images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '**',
-      },
-    ],
+    unoptimized: true,
   },
 };
 export default nextConfig;
+

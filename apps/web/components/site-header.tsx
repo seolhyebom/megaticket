@@ -9,17 +9,16 @@ import { Search, Menu, User, Ticket, AlertCircle } from "lucide-react"  // V7.16
 import { Input } from "@/components/ui/input"
 import { useEffect, useState } from "react"
 import { useAuth } from "@/contexts/auth-context"
-import { useSearchParams } from "next/navigation"  // V7.18: URL 쿼리에서 region 가져오기
+import { getAwsRegion } from "@/lib/runtime-config"
 
 function SiteHeaderContent() {
 
     const [isScrolled, setIsScrolled] = useState(false)
     const [hasRecoveredReservation, setHasRecoveredReservation] = useState(false)  // V7.16: 복구 예약 여부
     const { user, logout } = useAuth()
-    const searchParams = useSearchParams()  // V7.18
 
-    // V7.18: URL 쿼리 > 환경변수 > 기본값 순으로 리전 결정
-    const region = searchParams.get('region') || process.env.NEXT_PUBLIC_AWS_REGION || 'ap-northeast-2'
+    // V9.0: config.js의 getAwsRegion() 사용 (URL 파라미터 제거)
+    const region = getAwsRegion()
 
     useEffect(() => {
         const handleScroll = () => {
