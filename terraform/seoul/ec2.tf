@@ -9,10 +9,9 @@
 # Launch Template - App (Private Subnet)
 # -----------------------------------------------------------------------------
 resource "aws_launch_template" "app" {
-  name_prefix   = "${var.project_name}-lt-app-${var.region_code}-"
+  name_prefix   = "${var.project_name}-lt-${var.region_code}-app-"
   image_id      = var.base_ami_id
   instance_type = var.instance_type
-  key_name      = var.key_pair_name
 
   iam_instance_profile {
     name = aws_iam_instance_profile.ec2_profile.name

@@ -33,4 +33,4 @@ dynamodb_table_prefix = "KDT-Msp4-PLDR"
 domain_name = "megaticket.click"
 
 # GitHub 레포지토리
-github_repo = "https://github.com/seolhyebom/megaticket.git"
+github_repo = "https://github.com/MSP-Project-Pilot-Light/v3.0.git"
