@@ -9,12 +9,12 @@ resource "aws_ssm_parameter" "vpc_id" {
 resource "aws_ssm_parameter" "public_subnet_ids" {
   name  = "/plcr/dr/public_subnet_ids"
   type  = "StringList"
-  value = aws_subnet.public_a.id,aws_subnet.public_c.id
+  value = join(",", [aws_subnet.public_a.id, aws_subnet.public_c.id])
 }
 
 resource "aws_ssm_parameter" "private_rt_ids" {
   name  = "/plcr/dr/private_route_table_ids"
-  type  = "StringList"
+  type  = "String"
   value = aws_route_table.private.id
 }
 
