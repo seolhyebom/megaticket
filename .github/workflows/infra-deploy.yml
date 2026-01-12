@@ -1,0 +1,59 @@
+name: "Regional Infra Manual Deploy"
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: '배포할 리전을 선택하세요'
+        required: true
+        default: 'seoul'
+        type: choice
+        options:
+          - seoul
+          - tokyo
+      action:
+        description: '실행할 작업을 선택하세요'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: "Terraform ${{ github.event.inputs.action }} on ${{ github.event.inputs.region }}"
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-northeast-2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: ./terraform/${{ github.event.inputs.region }}
+        run: terraform init
+
+      - name: Terraform Action
+        id: tf_action
+        working-directory: ./terraform/${{ github.event.inputs.region }}
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "plan" ]; then
+            terraform plan
+          else
+            terraform apply -auto-approve
+          fi
