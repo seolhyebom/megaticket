@@ -19,7 +19,6 @@ private_subnet_c_cidr = "10.0.0.128/26" # 10.0.0.128 ~ 10.0.0.191
 # [참고] 여유 CIDR (확장용 Reserved): 10.0.0.192/26 (10.0.0.192 ~ 10.0.0.255)
 
 # EC2 설정
-key_pair_name = "seungwan_seoul"
 base_ami_id   = "ami-0b818a04bc9c2133c"  # Amazon Linux 2023
 instance_type = "t2.medium"
 
