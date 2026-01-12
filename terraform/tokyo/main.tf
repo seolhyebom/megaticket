@@ -7,6 +7,13 @@
 
 terraform {
   required_version = ">= 1.0.0"
+
+  backend "s3" {
+    bucket  = "plcr-s3-an2-tfstate"
+    key     = "v3/infra/tokyo/terraform.tfstate"
+    region  = "ap-northeast-2"
+    dynamodb_table = "plcr-tbl-an2-tfstate-lock"
+  }
   
   required_providers {
     aws = {
