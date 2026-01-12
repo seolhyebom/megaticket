@@ -24,9 +24,9 @@ instance_type = "t2.medium"
 base_ami_id   = "ami-095b23fbc6a272c40"  # 도쿄 복사 Golden AMI (테스트용)
 
 # Auto Scaling (Pilot Light - 평시 0, DR 시 scale up)
-app_asg_min     = 1
-app_asg_max     = 1
-app_asg_desired = 1
+app_asg_min     = 0
+app_asg_max     = 0
+app_asg_desired = 0
 
 # DynamoDB (참조용 - Global Table은 서울에서 관리)
 dynamodb_table_prefix = "KDT-Msp4-PLDR"

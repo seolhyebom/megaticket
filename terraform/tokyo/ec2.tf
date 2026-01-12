@@ -49,7 +49,7 @@ resource "aws_autoscaling_group" "app" {
   name                = "${var.project_name}-asg-app-${var.region_code}"
   min_size            = var.app_asg_min
   max_size            = var.app_asg_max
-  desired_capacity    = var.app_asg_desired  # Pilot Light: 0
+  desired_capacity    = var.app_asg_desired
   vpc_zone_identifier = [aws_subnet.private_a.id, aws_subnet.private_c.id]
   target_group_arns   = [aws_lb_target_group.app.arn]
   health_check_type   = "ELB"
@@ -73,6 +73,12 @@ resource "aws_autoscaling_group" "app" {
   }
 
   lifecycle {
-    create_before_destroy = true
+    ignore_changes = [
+      desired_capacity,
+      min_size,
+      max_size,
+      target_group_arns,
+      load_balancers
+    ]
   }
 }
