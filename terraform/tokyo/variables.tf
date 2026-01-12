@@ -95,19 +95,16 @@ variable "base_ami_id" {
 variable "app_asg_min" {
   description = "App ASG 최소 인스턴스"
   type        = number
-  default     = 1
 }
 
 variable "app_asg_max" {
   description = "App ASG 최대 인스턴스"
   type        = number
-  default     = 1
 }
 
 variable "app_asg_desired" {
   description = "App ASG 희망 인스턴스 (Pilot Light: 0)"
   type        = number
-  default     = 1
 }
 
 # -----------------------------------------------------------------------------
