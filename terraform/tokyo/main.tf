@@ -194,7 +194,7 @@ locals {
 resource "aws_vpc_endpoint" "interface" {
   for_each = local.interface_services
 
-  vpc_id            = aws_vpc.main.id
+  vpc_id            = aws_vpc.dr.id
   service_name      = "com.amazonaws.${var.aws_region}.${each.value}"
   vpc_endpoint_type = "Interface"
 
