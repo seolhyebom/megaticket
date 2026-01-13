@@ -60,9 +60,18 @@ resource "aws_autoscaling_group" "app" {
     version = "$Latest"
   }
 
-  tags = {
-    Name = "${var.project_name}-app-${var.region_code}"
-    Tier = "app"
+  dynamic "tag" {
+    for_each = merge(
+      {
+        Name = "${var.project_name}-app-${var.region_code}"
+        Tier = "app"
+      }
+    )
+    content {
+      key                 = tag.key
+      value               = tag.value
+      propagate_at_launch = true
+    }
   }
 
   lifecycle {
