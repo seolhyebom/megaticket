@@ -218,20 +218,10 @@ resource "aws_vpc_endpoint" "s3" {
           "s3:ListBucket"
         ]
         Resource  = [
-          "arn:aws:s3:::${var.project_name}-s3-web/*"
-          # 로그 적재용 S3 버킷 생성 시 arn 추가 필요
-        ]
-      },
-      {
-        Sid       = "AllowAmazonLinuxRepo"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = [
-          "s3:GetObject"
-        ]
-        Resource  = [
+          "arn:aws:s3:::${var.project_name}-s3-web/*",
           "arn:aws:s3:::al2023-repos-*/*",
           "arn:aws:s3:::amazonlinux-*/*"
+          # 로그 적재용 S3 버킷 생성 시 arn 추가 필요
         ]
       }
     ]
