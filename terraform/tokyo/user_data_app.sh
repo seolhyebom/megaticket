@@ -36,7 +36,6 @@ cat /home/ec2-user/megaticket/apps/app/.env.production
 
 # 1. Git 설치 (Amazon Linux 2023)
 echo "=== Installing Git ==="
-dnf update -y
 dnf install git -y
 
 # PM2 재시작 - 환경변수를 명시적으로 주입하여 start

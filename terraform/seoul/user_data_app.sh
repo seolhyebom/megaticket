@@ -17,7 +17,6 @@ USER_HOME=/home/ec2-user
 
 # 1. Git 설치 (Amazon Linux 2023)
 echo "=== Installing Git ==="
-dnf update -y
 dnf install git -y
 
 # 2. ec2-user 홈 디렉토리 권한 확인
