@@ -200,7 +200,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 }
 
 # -----------------------------------------------------------------------------
-# VPC Endpoints (Interface Type)
+# VPC Endpoints (Interface)
 # -----------------------------------------------------------------------------
 locals {
   interface_services = {

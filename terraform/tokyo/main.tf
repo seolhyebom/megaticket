@@ -165,7 +165,7 @@ resource "aws_route_table_association" "private_c" {
 }
 
 # -----------------------------------------------------------------------------
-# VPC Endpoints (Gateway - 무료)
+# VPC Endpoints (Gateway)
 # -----------------------------------------------------------------------------
 resource "aws_vpc_endpoint" "dynamodb" {
   vpc_id            = aws_vpc.dr.id
@@ -175,5 +175,62 @@ resource "aws_vpc_endpoint" "dynamodb" {
 
   tags = {
     Name = "${var.project_name}-vpce-${var.region_code}-gtbl"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# VPC Endpoints (Interface)
+# -----------------------------------------------------------------------------
+locals {
+  interface_services = {
+    "ssm"             = "ssm"     
+    "ssmmessages"     = "ssmmessages"  
+    "ec2messages"     = "ec2messages" 
+    "bedrock"         = "bedrock"
+    "bedrock-runtime" = "bedrock-runtime"
+  }
+}
+
+resource "aws_vpc_endpoint" "interface" {
+  for_each = local.interface_services
+
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.aws_region}.${each.value}"
+  vpc_endpoint_type = "Interface"
+
+  subnet_ids = [
+    aws_subnet.private_a.id,
+    aws_subnet.private_c.id
+  ]
+
+  security_group_ids = [aws_security_group.vpce.id]
+  private_dns_enabled = true
+
+  tags = {
+    Name = "${var.project_name}-vpce-${var.region_code}-${each.key}"
+  }
+}
+
+# -----------------------------------------------------------------------------
+# ALB TG
+# -----------------------------------------------------------------------------
+resource "aws_lb_target_group" "app" {
+  name     = "${var.project_name}-tg-app-${var.region_code}"
+  port     = 3001
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    path                = "/api/health"
+    healthy_threshold   = 2
+    unhealthy_threshold = 5
+    timeout             = 5
+    interval            = 30
+    matcher             = "200"
+  }
+
+  tags = {
+    Name = "${var.project_name}-tg-${var.region_code}-app"
+    Tier = "app"
   }
 }
