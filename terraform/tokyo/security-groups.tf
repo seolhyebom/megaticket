@@ -1,7 +1,6 @@
 # =============================================================================
-# Security Groups - Seoul Main Region (V3.0)
+# Security Groups - Tokyo DR Region (V3.0)
 # =============================================================================
-# Web SG 제거 (S3로 이전)
 # ALB SG → App SG 직접 연결
 # =============================================================================
 
@@ -9,9 +8,8 @@
 # ALB Security Group
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "alb" {
-  name        = "${var.project_name}-sg-alb-${var.region_code}"
-  description = "Security group for Application Load Balancer"
-  vpc_id      = aws_vpc.main.id
+  name        = "${var.project_name}-sg-${var.region_code}-alb"
+  vpc_id      = aws_vpc.dr.id
 
   ingress {
     description = "HTTP"
@@ -29,7 +27,6 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Egress는 모든 아웃바운드 허용 (순환 참조 방지)
   egress {
     from_port   = 0
     to_port     = 0
@@ -38,7 +35,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = {
-    Name = "${var.project_name}-sg-alb-${var.region_code}"
+    Name = "${var.project_name}-sg-${var.region_code}-alb"
   }
 }
 
@@ -46,11 +43,9 @@ resource "aws_security_group" "alb" {
 # App Instance Security Group (Private Subnet)
 # -----------------------------------------------------------------------------
 resource "aws_security_group" "app" {
-  name        = "${var.project_name}-sg-app-${var.region_code}"
-  description = "Security group for App instances"
-  vpc_id      = aws_vpc.main.id
+  name        = "${var.project_name}-sg-${var.region_code}-app"
+  vpc_id      = aws_vpc.dr.id
 
-  # ALB에서 오는 API 요청
   ingress {
     description     = "API Port from ALB"
     from_port       = 3001
@@ -59,7 +54,6 @@ resource "aws_security_group" "app" {
     security_groups = [aws_security_group.alb.id]
   }
 
-  # SSM Session Manager 및 아웃바운드 (HTTPS, DynamoDB 등)
   egress {
     from_port   = 0
     to_port     = 0
@@ -68,7 +62,7 @@ resource "aws_security_group" "app" {
   }
 
   tags = {
-    Name = "${var.project_name}-sg-app-${var.region_code}"
+    Name = "${var.project_name}-sg-${var.region_code}-app"
     Tier = "app"
   }
 }

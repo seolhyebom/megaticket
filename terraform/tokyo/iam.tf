@@ -1,12 +1,12 @@
 # =============================================================================
-# IAM Roles and Policies - Seoul Main Region (V3.0)
+# IAM Roles and Policies - Tokyo DR Region (V3.0)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # EC2 IAM Role (SSM + DynamoDB + Bedrock + CloudWatch)
 # -----------------------------------------------------------------------------
 resource "aws_iam_role" "ec2_role" {
-  name = "${var.project_name}-role-ec2-${var.region_code}"
+  name = "${var.project_name}-role-${var.region_code}-ec2"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -35,10 +35,10 @@ resource "aws_iam_role_policy_attachment" "ssm" {
 }
 
 # -----------------------------------------------------------------------------
-# Bedrock 액세스 정책 (인라인) - Converse API + Cross-Region Inference
+# Bedrock 액세스 정책 (인라인)
 # -----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "bedrock_policy" {
-  name = "${var.project_name}-pol-bedrock-${var.region_code}"
+  name = "${var.project_name}-pol-${var.region_code}-bedrock"
   role = aws_iam_role.ec2_role.id
 
   policy = jsonencode({
@@ -54,10 +54,8 @@ resource "aws_iam_role_policy" "bedrock_policy" {
           "bedrock:ConverseStream"
         ]
         Resource = [
-          # Foundation Models (Direct)
           "arn:aws:bedrock:*::foundation-model/anthropic.*",
           "arn:aws:bedrock:*::foundation-model/amazon.*",
-          # Cross-Region Inference Profiles (global., apac. prefixes)
           "arn:aws:bedrock:*:*:inference-profile/*"
         ]
       }
@@ -66,10 +64,10 @@ resource "aws_iam_role_policy" "bedrock_policy" {
 }
 
 # -----------------------------------------------------------------------------
-# DynamoDB 최소 권한 정책 (인라인)
+# DynamoDB 최소 권한 정책
 # -----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "dynamodb_policy" {
-  name = "${var.project_name}-pol-ddb-${var.region_code}"
+  name = "${var.project_name}-pol-${var.region_code}-gtbl"
   role = aws_iam_role.ec2_role.id
 
   policy = jsonencode({
@@ -103,7 +101,7 @@ resource "aws_iam_role_policy" "dynamodb_policy" {
 # CloudWatch Logs 정책 (인라인)
 # -----------------------------------------------------------------------------
 resource "aws_iam_role_policy" "cloudwatch_policy" {
-  name = "${var.project_name}-pol-cw-${var.region_code}"
+  name = "${var.project_name}-pol-${var.region_code}-lsm"
   role = aws_iam_role.ec2_role.id
 
   policy = jsonencode({

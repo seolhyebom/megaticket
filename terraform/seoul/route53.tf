@@ -14,10 +14,7 @@ resource "aws_route53_health_check" "api" {
   request_interval  = 30
 
   tags = {
-    Project     = "plcr"
-    Name        = "plcr-hc-api-${var.region_code}"
-    Environment = var.environment
-    ManagedBy   = "terraform"
+    Name        = "${var.project_name}-r53-${var.region_code}-api"
   }
 }
 
@@ -33,7 +30,7 @@ resource "aws_route53_record" "api_primary" {
     type = "PRIMARY"
   }
 
-  set_identifier  = "plcr-api-primary-${var.region_code}"
+  set_identifier  = "${var.project_name}-api${var.region_code}-primary"
   health_check_id = aws_route53_health_check.api.id
 
   alias {
