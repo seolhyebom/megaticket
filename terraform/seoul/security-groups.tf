@@ -5,6 +5,10 @@ data "aws_ec2_managed_prefix_list" "cloudfront" {
   name = "com.amazonaws.global.cloudfront.origin-facing"
 }
 
+data "aws_prefix_list" "s3" {
+  prefix_list_id = aws_vpc_endpoint.s3.prefix_list_id
+}
+
 # --------------------------------------------------------------------------------
 # Security Groups Definitions
 # --------------------------------------------------------------------------------
@@ -77,13 +81,22 @@ resource "aws_security_group_rule" "app_ingress_alb" {
   security_group_id        = aws_security_group.app.id
 }
 
-resource "aws_security_group_rule" "app_egress_vpce" {
+resource "aws_security_group_rule" "app_egress_ssm" {
   type                     = "egress"
   from_port                = 443
   to_port                  = 443
   protocol                 = "tcp"
   source_security_group_id = aws_security_group.vpce.id
   security_group_id        = aws_security_group.app.id
+}
+
+resource "aws_security_group_rule" "app_egress_s3" {
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  prefix_list_ids   = [aws_vpc_endpoint.s3.prefix_list_id]
+  security_group_id = aws_security_group.app.id
 }
 
 resource "aws_security_group_rule" "app_egress_https" {

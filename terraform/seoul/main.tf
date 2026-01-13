@@ -199,6 +199,38 @@ resource "aws_vpc_endpoint" "dynamodb" {
   }
 }
 
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id            = aws_vpc.main.id
+  service_name      = "com.amazonaws.${var.aws_region}.s3"
+  vpc_endpoint_type = "Gateway"
+  route_table_ids = var.private_route_table_ids 
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowAccessToSpecificBuckets"
+        Effect    = "Allow"
+        Principal = "*" 
+        Action    = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:ListBucket"
+        ]
+        Resource  = [
+          "arn:aws:s3:::${var.project_name}-s3-web/*"
+          # 로그 적재용 S3 버킷 생성 시 arn 추가 필요
+        ]
+      }
+    ]
+  })
+
+  tags = {
+    Name = "${var.project_name}-vpce-${var.region_code}-s3"
+  }
+}
+
+
 # -----------------------------------------------------------------------------
 # VPC Endpoints (Interface)
 # -----------------------------------------------------------------------------
