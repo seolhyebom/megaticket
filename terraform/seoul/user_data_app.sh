@@ -36,7 +36,7 @@ sudo -u ec2-user bash -c 'source $HOME/.nvm/nvm.sh && npm install -g pm2'
 
 # 6. 소스코드 복제
 echo "=== Cloning Repository ==="
-sudo -u ec2-user bash -c 'cd $HOME && rm -rf megaticket && git clone ${github_repo} || echo "Git clone failed, attempting recovery..."'
+sudo -u ec2-user bash -c 'cd $HOME && rm -rf megaticket && git clone -b feature/s3-migration ${github_repo} || echo "Git clone failed, attempting recovery..."'
 
 # 7. 의존성 설치
 echo "=== Installing Dependencies ==="
