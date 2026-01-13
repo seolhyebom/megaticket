@@ -50,6 +50,7 @@ resource "aws_iam_role_policy" "bedrock_policy" {
         Action = [
           "bedrock:InvokeModel",
           "bedrock:InvokeModelWithResponseStream",
+          "bedrock:ListFoundationModels",
           "bedrock:Converse",
           "bedrock:ConverseStream"
         ]
