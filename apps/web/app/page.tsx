@@ -12,8 +12,8 @@ export default function Home() {
   const musicals = [
     { id: "perf-kinky-1", title: "킹키부츠", category: "뮤지컬", price: "170,000원", badge: "HOT", poster: "/posters/kinky-boots.png" },
     { id: "perf-phantom-of-the-opera-1", title: "오페라의 유령", category: "뮤지컬", price: "180,000원", badge: "HOT", poster: "/posters/opera.png" },
-    { title: "레미제라블", category: "뮤지컬", price: "170,000원", badge: "NEW" },
-    { title: "위키드", category: "뮤지컬", price: "160,000원", badge: "NEW" },
+    { id: "perf-jekyll-hyde", title: "지킬앤하이드", category: "뮤지컬", price: "170,000원", badge: "NEW", poster: "/posters/jekyll-hyde.png" },
+    { id: "perf-aladdin", title: "알라딘", category: "뮤지컬", price: "190,000원", badge: "NEW", poster: "/posters/aladdin.png" },
   ]
 
   const plays = [
