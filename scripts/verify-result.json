@@ -1,0 +1,220 @@
+[
+  {
+    "performanceId": "perf-bts-worldtour",
+    "title": "방탄소년단 월드 투어",
+    "checks": {
+      "castMatch": {
+        "expected": [
+          "RM",
+          "뷔",
+          "슈가",
+          "정국",
+          "제이홉",
+          "지민",
+          "진"
+        ],
+        "actual": [
+          "RM",
+          "뷔",
+          "슈가",
+          "정국",
+          "제이홉",
+          "지민",
+          "진"
+        ],
+        "pass": true
+      },
+      "vipPrice": {
+        "expected": 220000,
+        "actual": 220000,
+        "pass": true
+      },
+      "rPrice": {
+        "expected": 170000,
+        "actual": 170000,
+        "pass": true
+      },
+      "startDate": {
+        "expected": "2026-02-20",
+        "actual": "2026-02-20",
+        "pass": true
+      },
+      "endDate": {
+        "expected": "2026-02-22",
+        "actual": "2026-02-22",
+        "pass": true
+      },
+      "gradeMapping": {
+        "vipSeats": 51,
+        "rSeats": 39,
+        "pass": true
+      },
+      "hasOPSeats": {
+        "expected": false,
+        "actual": false,
+        "pass": true
+      }
+    },
+    "allPass": true
+  },
+  {
+    "performanceId": "perf-blackpink-worldtour",
+    "title": "블랙핑크 월드 투어",
+    "checks": {
+      "castMatch": {
+        "expected": [
+          "로제",
+          "리사",
+          "제니",
+          "지수"
+        ],
+        "actual": [
+          "로제",
+          "리사",
+          "제니",
+          "지수"
+        ],
+        "pass": true
+      },
+      "vipPrice": {
+        "expected": 210000,
+        "actual": 210000,
+        "pass": true
+      },
+      "rPrice": {
+        "expected": 160000,
+        "actual": 160000,
+        "pass": true
+      },
+      "startDate": {
+        "expected": "2026-03-13",
+        "actual": "2026-03-13",
+        "pass": true
+      },
+      "endDate": {
+        "expected": "2026-03-15",
+        "actual": "2026-03-15",
+        "pass": true
+      },
+      "gradeMapping": {
+        "vipSeats": 51,
+        "rSeats": 39,
+        "pass": true
+      },
+      "hasOPSeats": {
+        "expected": false,
+        "actual": false,
+        "pass": true
+      }
+    },
+    "allPass": true
+  },
+  {
+    "performanceId": "perf-day6-present",
+    "title": "DAY6",
+    "checks": {
+      "castMatch": {
+        "expected": [
+          "Young K",
+          "도운",
+          "성진",
+          "원필"
+        ],
+        "actual": [
+          "Young K",
+          "도운",
+          "성진",
+          "원필"
+        ],
+        "pass": true
+      },
+      "vipPrice": {
+        "expected": 150000,
+        "actual": 150000,
+        "pass": true
+      },
+      "rPrice": {
+        "expected": 120000,
+        "actual": 120000,
+        "pass": true
+      },
+      "startDate": {
+        "expected": "2026-03-27",
+        "actual": "2026-03-27",
+        "pass": true
+      },
+      "endDate": {
+        "expected": "2026-03-29",
+        "actual": "2026-03-29",
+        "pass": true
+      },
+      "gradeMapping": {
+        "vipSeats": 51,
+        "rSeats": 39,
+        "pass": true
+      },
+      "hasOPSeats": {
+        "expected": false,
+        "actual": false,
+        "pass": true
+      }
+    },
+    "allPass": true
+  },
+  {
+    "performanceId": "perf-ive-showhave",
+    "title": "아이브",
+    "checks": {
+      "castMatch": {
+        "expected": [
+          "가을",
+          "레이",
+          "리즈",
+          "안유진",
+          "이서",
+          "장원영"
+        ],
+        "actual": [
+          "가을",
+          "레이",
+          "리즈",
+          "안유진",
+          "이서",
+          "장원영"
+        ],
+        "pass": true
+      },
+      "vipPrice": {
+        "expected": 200000,
+        "actual": 200000,
+        "pass": true
+      },
+      "rPrice": {
+        "expected": 150000,
+        "actual": 150000,
+        "pass": true
+      },
+      "startDate": {
+        "expected": "2026-02-27",
+        "actual": "2026-02-27",
+        "pass": true
+      },
+      "endDate": {
+        "expected": "2026-03-01",
+        "actual": "2026-03-01",
+        "pass": true
+      },
+      "gradeMapping": {
+        "vipSeats": 51,
+        "rSeats": 39,
+        "pass": true
+      },
+      "hasOPSeats": {
+        "expected": false,
+        "actual": false,
+        "pass": true
+      }
+    },
+    "allPass": true
+  }
+]

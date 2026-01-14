@@ -25,13 +25,13 @@ export function HomeCarousel() {
             cta: "자세히 보기"
         },
         {
-            title: "2024시즌 뮤지컬 <시카고>",
+            title: "2026 시즌 뮤지컬 <시카고>",
             subtitle: "전 세계를 사로잡은 매혹적인 재즈의 선율",
             bg: "bg-gradient-to-r from-rose-600 to-pink-600",
             cta: "예매하기"
         },
         {
-            title: "싸이 흠뻑쇼 2024",
+            title: "싸이 흠뻑쇼 2026",
             subtitle: "무더위를 날려버릴 최고의 퍼포먼스",
             bg: "bg-gradient-to-r from-blue-600 to-cyan-600",
             cta: "티켓 오픈"

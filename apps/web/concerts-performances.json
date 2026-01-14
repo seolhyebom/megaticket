@@ -1,0 +1,467 @@
+{
+    "plcr-gtbl-performances": [
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-bts-worldtour"
+                    },
+                    "title": {
+                        "S": "방탄소년단 월드 투어"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "잠실 종합운동장 주경기장"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/bts.jpg"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-02-20"
+                            },
+                            {
+                                "S": "2026-02-21"
+                            },
+                            {
+                                "S": "2026-02-22"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "19:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.02.20 - 2026.02.22"
+                    },
+                    "description": {
+                        "S": "BTS MAP OF THE SOUL TOUR - 전 세계를 감동시킨 무대가 서울에서 펼쳐집니다"
+                    },
+                    "duration": {
+                        "S": "180분"
+                    },
+                    "runtime": {
+                        "S": "약 3시간"
+                    },
+                    "ageRating": {
+                        "S": "전체 관람가"
+                    },
+                    "price": {
+                        "S": "VIP석 220,000원"
+                    },
+                    "cast": {
+                        "M": {
+                            "bts": {
+                                "L": [
+                                    {
+                                        "S": "정국"
+                                    },
+                                    {
+                                        "S": "뷔"
+                                    },
+                                    {
+                                        "S": "지민"
+                                    },
+                                    {
+                                        "S": "RM"
+                                    },
+                                    {
+                                        "S": "제이홉"
+                                    },
+                                    {
+                                        "S": "슈가"
+                                    },
+                                    {
+                                        "S": "진"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "220000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "170000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-blackpink-worldtour"
+                    },
+                    "title": {
+                        "S": "블랙핑크 월드 투어"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "고양 종합운동장"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/blackpink.jpg"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-03-13"
+                            },
+                            {
+                                "S": "2026-03-14"
+                            },
+                            {
+                                "S": "2026-03-15"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "19:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.03.13 - 2026.03.15"
+                    },
+                    "description": {
+                        "S": "BLACKPINK DEADLINE WORLD TOUR IN GOYANG - 블랙핑크 컴백 월드 투어"
+                    },
+                    "duration": {
+                        "S": "170분"
+                    },
+                    "runtime": {
+                        "S": "약 2시간 50분"
+                    },
+                    "ageRating": {
+                        "S": "전체 관람가"
+                    },
+                    "price": {
+                        "S": "VIP석 210,000원"
+                    },
+                    "cast": {
+                        "M": {
+                            "blackpink": {
+                                "L": [
+                                    {
+                                        "S": "지수"
+                                    },
+                                    {
+                                        "S": "제니"
+                                    },
+                                    {
+                                        "S": "로제"
+                                    },
+                                    {
+                                        "S": "리사"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "210000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "160000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-day6-present"
+                    },
+                    "title": {
+                        "S": "DAY6"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "KSPO DOME"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/day6.png"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-03-27"
+                            },
+                            {
+                                "S": "2026-03-28"
+                            },
+                            {
+                                "S": "2026-03-29"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "18:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.03.27 - 2026.03.29"
+                    },
+                    "description": {
+                        "S": "DAY6 The Present - 데이식스 콘서트"
+                    },
+                    "duration": {
+                        "S": "160분"
+                    },
+                    "runtime": {
+                        "S": "약 2시간 40분"
+                    },
+                    "ageRating": {
+                        "S": "전체 관람가"
+                    },
+                    "price": {
+                        "S": "VIP석 150,000원"
+                    },
+                    "cast": {
+                        "M": {
+                            "day6": {
+                                "L": [
+                                    {
+                                        "S": "성진"
+                                    },
+                                    {
+                                        "S": "Young K"
+                                    },
+                                    {
+                                        "S": "원필"
+                                    },
+                                    {
+                                        "S": "도운"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "150000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "120000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-ive-showhave"
+                    },
+                    "title": {
+                        "S": "아이브"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "KSPO DOME"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/ive.png"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-02-27"
+                            },
+                            {
+                                "S": "2026-02-28"
+                            },
+                            {
+                                "S": "2026-03-01"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "18:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.02.27 - 2026.03.01"
+                    },
+                    "description": {
+                        "S": "IVE SHOW WHAT I HAVE ENCORE - 아이브의 앙코르 콘서트"
+                    },
+                    "duration": {
+                        "S": "150분"
+                    },
+                    "runtime": {
+                        "S": "약 2시간 30분"
+                    },
+                    "ageRating": {
+                        "S": "전체 관람가"
+                    },
+                    "price": {
+                        "S": "VIP석 200,000원"
+                    },
+                    "cast": {
+                        "M": {
+                            "ive": {
+                                "L": [
+                                    {
+                                        "S": "안유진"
+                                    },
+                                    {
+                                        "S": "가을"
+                                    },
+                                    {
+                                        "S": "레이"
+                                    },
+                                    {
+                                        "S": "장원영"
+                                    },
+                                    {
+                                        "S": "리즈"
+                                    },
+                                    {
+                                        "S": "이서"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "200000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "150000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -1,0 +1,65 @@
+[
+  {
+    "scheduleId": "perf-phantom-of-the-opera-1-2026-05-21-19:30",
+    "date": "2026-05-21",
+    "datetime": "2026-05-21T19:30",
+    "totalSeats": 1210,
+    "performanceId": "perf-phantom-of-the-opera-1",
+    "status": "AVAILABLE",
+    "dayOfWeek": "목",
+    "casting": {
+      "christine": [
+        "손지수",
+        "정선아"
+      ],
+      "phantom": [
+        "전동석",
+        "박은태"
+      ],
+      "raoul": [
+        "정택운",
+        "마이클리"
+      ]
+    },
+    "createdAt": "2026-01-01T02:34:08.712Z",
+    "availableSeats": 1210,
+    "time": "19:30"
+  },
+  {
+    "scheduleId": "perf-kinky-1-2026-04-24-19:30",
+    "date": "2026-04-24",
+    "datetime": "2026-04-24T19:30",
+    "totalSeats": 1210,
+    "performanceId": "perf-kinky-1",
+    "status": "AVAILABLE",
+    "dayOfWeek": "금",
+    "casting": {
+      "lola": [
+        "서경수",
+        "강홍석",
+        "백형훈"
+      ],
+      "lauren": [
+        "한재아",
+        "허윤슬"
+      ],
+      "don": [
+        "심재현",
+        "신승환",
+        "김동현"
+      ],
+      "charlie": [
+        "김호영",
+        "신재범",
+        "이재환"
+      ],
+      "nicola": [
+        "이루원",
+        "유주연"
+      ]
+    },
+    "createdAt": "2026-01-01T02:34:08.787Z",
+    "availableSeats": 1210,
+    "time": "19:30"
+  }
+]

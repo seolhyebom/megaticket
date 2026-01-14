@@ -20,6 +20,14 @@ const GRADE_COLORS: Record<string, string> = {
     'A': '#32CD32',    // 초록색
 };
 
+// [V8.20] 콘서트별 팬덤 색상 매핑
+const CONCERT_COLORS: Record<string, Record<string, string>> = {
+    'perf-bts-worldtour': { VIP: '#9333EA', R: '#A78BFA' },
+    'perf-blackpink-worldtour': { VIP: '#EC4899', R: '#F472B6' },
+    'perf-day6-present': { VIP: '#EAB308', R: '#FCD34D' },
+    'perf-ive-showhave': { VIP: '#DC2626', R: '#F87171' },
+};
+
 // [V8.17] 등급 정렬 순서
 const GRADE_ORDER = ['OP', 'VIP', 'R', 'S', 'A'];
 
@@ -314,8 +322,9 @@ function ReservationConfirmContent() {
                                 }
 
                                 const displayText = `${floor} ${sectionId}구역 ${rowId}열 ${displayNumber}번 (${seat.grade}석)`;
-                                // [V8.13 FIX] 등급별 색상 - API 응답 우선, 없으면 fallback
-                                const gradeColor = (seat as any).color || GRADE_COLORS[seat.grade] || '#333333';
+                                // [V8.20 FIX] 콘서트별 팬덤 색상 우선, 없으면 API 응답, 최종 fallback은 GRADE_COLORS
+                                const concertColors = session.performanceId ? CONCERT_COLORS[session.performanceId] : null;
+                                const gradeColor = concertColors?.[seat.grade] || (seat as any).color || GRADE_COLORS[seat.grade] || '#333333';
 
                                 return (
                                     // V7.13: 아이템 간격 조절 (p-2 -> py-0.5 px-2)

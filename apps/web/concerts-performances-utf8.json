@@ -1,0 +1,467 @@
+﻿{
+    "plcr-gtbl-performances": [
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-bts-worldtour"
+                    },
+                    "title": {
+                        "S": "諛⑺깂?뚮뀈???붾뱶 ?ъ뼱"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "?좎떎 醫낇빀?대룞??二쇨꼍湲곗옣"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/bts.jpg"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-02-20"
+                            },
+                            {
+                                "S": "2026-02-21"
+                            },
+                            {
+                                "S": "2026-02-22"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "19:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.02.20 - 2026.02.22"
+                    },
+                    "description": {
+                        "S": "BTS MAP OF THE SOUL TOUR - ???멸퀎瑜?媛먮룞?쒗궓 臾대?媛 ?쒖슱?먯꽌 ?쇱퀜吏묐땲??
+                    },
+                    "duration": {
+                        "S": "180遺?
+                    },
+                    "runtime": {
+                        "S": "??3?쒓컙"
+                    },
+                    "ageRating": {
+                        "S": "?꾩껜 愿?뚭?"
+                    },
+                    "price": {
+                        "S": "VIP??220,000??
+                    },
+                    "cast": {
+                        "M": {
+                            "bts": {
+                                "L": [
+                                    {
+                                        "S": "?뺢뎅"
+                                    },
+                                    {
+                                        "S": "酉?
+                                    },
+                                    {
+                                        "S": "吏誘?
+                                    },
+                                    {
+                                        "S": "RM"
+                                    },
+                                    {
+                                        "S": "?쒖씠??
+                                    },
+                                    {
+                                        "S": "?덇?"
+                                    },
+                                    {
+                                        "S": "吏?
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "220000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "170000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-blackpink-worldtour"
+                    },
+                    "title": {
+                        "S": "釉붾옓?묓겕 ?붾뱶 ?ъ뼱"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "怨좎뼇 醫낇빀?대룞??
+                    },
+                    "posterUrl": {
+                        "S": "/posters/blackpink.jpg"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-03-13"
+                            },
+                            {
+                                "S": "2026-03-14"
+                            },
+                            {
+                                "S": "2026-03-15"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "19:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.03.13 - 2026.03.15"
+                    },
+                    "description": {
+                        "S": "BLACKPINK DEADLINE WORLD TOUR IN GOYANG - 釉붾옓?묓겕 而대갚 ?붾뱶 ?ъ뼱"
+                    },
+                    "duration": {
+                        "S": "170遺?
+                    },
+                    "runtime": {
+                        "S": "??2?쒓컙 50遺?
+                    },
+                    "ageRating": {
+                        "S": "?꾩껜 愿?뚭?"
+                    },
+                    "price": {
+                        "S": "VIP??210,000??
+                    },
+                    "cast": {
+                        "M": {
+                            "blackpink": {
+                                "L": [
+                                    {
+                                        "S": "吏??
+                                    },
+                                    {
+                                        "S": "?쒕땲"
+                                    },
+                                    {
+                                        "S": "濡쒖젣"
+                                    },
+                                    {
+                                        "S": "由ъ궗"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "210000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "160000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-day6-present"
+                    },
+                    "title": {
+                        "S": "DAY6"
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "KSPO DOME"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/day6.png"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-03-27"
+                            },
+                            {
+                                "S": "2026-03-28"
+                            },
+                            {
+                                "S": "2026-03-29"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "18:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.03.27 - 2026.03.29"
+                    },
+                    "description": {
+                        "S": "DAY6 The Present - ?곗씠?앹뒪 肄섏꽌??
+                    },
+                    "duration": {
+                        "S": "160遺?
+                    },
+                    "runtime": {
+                        "S": "??2?쒓컙 40遺?
+                    },
+                    "ageRating": {
+                        "S": "?꾩껜 愿?뚭?"
+                    },
+                    "price": {
+                        "S": "VIP??150,000??
+                    },
+                    "cast": {
+                        "M": {
+                            "day6": {
+                                "L": [
+                                    {
+                                        "S": "?깆쭊"
+                                    },
+                                    {
+                                        "S": "Young K"
+                                    },
+                                    {
+                                        "S": "?먰븘"
+                                    },
+                                    {
+                                        "S": "?꾩슫"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "150000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "120000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "performanceId": {
+                        "S": "perf-ive-showhave"
+                    },
+                    "title": {
+                        "S": "?꾩씠釉?
+                    },
+                    "venueId": {
+                        "S": "charlotte-theater"
+                    },
+                    "venue": {
+                        "S": "KSPO DOME"
+                    },
+                    "posterUrl": {
+                        "S": "/posters/ive.png"
+                    },
+                    "dates": {
+                        "L": [
+                            {
+                                "S": "2026-02-27"
+                            },
+                            {
+                                "S": "2026-02-28"
+                            },
+                            {
+                                "S": "2026-03-01"
+                            }
+                        ]
+                    },
+                    "times": {
+                        "L": [
+                            {
+                                "S": "18:00"
+                            }
+                        ]
+                    },
+                    "dateRange": {
+                        "S": "2026.02.27 - 2026.03.01"
+                    },
+                    "description": {
+                        "S": "IVE SHOW WHAT I HAVE ENCORE - ?꾩씠釉뚯쓽 ?숈퐫瑜?肄섏꽌??
+                    },
+                    "duration": {
+                        "S": "150遺?
+                    },
+                    "runtime": {
+                        "S": "??2?쒓컙 30遺?
+                    },
+                    "ageRating": {
+                        "S": "?꾩껜 愿?뚭?"
+                    },
+                    "price": {
+                        "S": "VIP??200,000??
+                    },
+                    "cast": {
+                        "M": {
+                            "ive": {
+                                "L": [
+                                    {
+                                        "S": "?덉쑀吏?
+                                    },
+                                    {
+                                        "S": "媛??
+                                    },
+                                    {
+                                        "S": "?덉씠"
+                                    },
+                                    {
+                                        "S": "?μ썝??
+                                    },
+                                    {
+                                        "S": "由ъ쫰"
+                                    },
+                                    {
+                                        "S": "?댁꽌"
+                                    }
+                                ]
+                            }
+                        }
+                    },
+                    "grades": {
+                        "L": [
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "VIP"
+                                    },
+                                    "price": {
+                                        "N": "200000"
+                                    },
+                                    "color": {
+                                        "S": "#FFD700"
+                                    }
+                                }
+                            },
+                            {
+                                "M": {
+                                    "grade": {
+                                        "S": "R"
+                                    },
+                                    "price": {
+                                        "N": "150000"
+                                    },
+                                    "color": {
+                                        "S": "#C0C0C0"
+                                    }
+                                }
+                            }
+                        ]
+                    },
+                    "createdAt": {
+                        "S": "2026-01-14"
+                    }
+                }
+            }
+        }
+    ]
+}

@@ -179,26 +179,46 @@ export default function PerformanceDetailClient() {
                                         <div className="space-y-2 pt-2">
                                             <span className="text-gray-500 block text-sm">티켓 가격</span>
                                             <div className="bg-gray-50 p-3 rounded-lg space-y-2 text-sm text-gray-700">
-                                                {(performance.price || "").split(" / ").map((priceItem: string, idx: number) => {
-                                                    const [grade, ...rest] = priceItem.trim().split(" ");
-                                                    const cost = rest.join(" ");
-                                                    let badgeColor = "bg-gray-500";
-                                                    if (grade.includes("OP")) badgeColor = "bg-purple-600";
-                                                    else if (grade.includes("VIP")) badgeColor = "bg-rose-500";
-                                                    else if (grade.includes("R")) badgeColor = "bg-green-600";
-                                                    else if (grade.includes("S")) badgeColor = "bg-blue-500";
-                                                    else if (grade.includes("A")) badgeColor = "bg-yellow-500";
-
-                                                    return (
-                                                        <div key={idx} className="flex items-center justify-between">
-                                                            <div className="flex items-center gap-2">
-                                                                <span className={`w-3 h-3 rounded-none ${badgeColor}`} />
-                                                                <span className="font-medium text-gray-600">{grade}</span>
+                                                {/* seatGrades가 있으면 사용, 없으면 price 문자열 파싱 */}
+                                                {(performance as any).seatGrades && (performance as any).seatGrades.length > 0 ? (
+                                                    (performance as any).seatGrades.map((gradeInfo: any, idx: number) => {
+                                                        // seatColors에서 색상 가져오기, 없으면 gradeInfo.color 사용
+                                                        const gradeColor = ((performance as any).seatColors && (performance as any).seatColors[gradeInfo.grade]) || gradeInfo.color || '#888888';
+                                                        return (
+                                                            <div key={idx} className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span
+                                                                        className="w-3 h-3 rounded-none"
+                                                                        style={{ backgroundColor: gradeColor }}
+                                                                    />
+                                                                    <span className="font-medium text-gray-600">{gradeInfo.grade}석</span>
+                                                                </div>
+                                                                <span className="font-bold text-gray-900">{gradeInfo.price?.toLocaleString()}원</span>
                                                             </div>
-                                                            <span className="font-bold text-gray-900">{cost}</span>
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    })
+                                                ) : (
+                                                    (performance.price || "").split(" / ").map((priceItem: string, idx: number) => {
+                                                        const [grade, ...rest] = priceItem.trim().split(" ");
+                                                        const cost = rest.join(" ");
+                                                        let badgeColor = "#888888";
+                                                        if (grade.includes("OP")) badgeColor = "#9E37D1";
+                                                        else if (grade.includes("VIP")) badgeColor = "#FF0000";
+                                                        else if (grade.includes("R")) badgeColor = "#FFA500";
+                                                        else if (grade.includes("S")) badgeColor = "#1E90FF";
+                                                        else if (grade.includes("A")) badgeColor = "#32CD32";
+
+                                                        return (
+                                                            <div key={idx} className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="w-3 h-3 rounded-none" style={{ backgroundColor: badgeColor }} />
+                                                                    <span className="font-medium text-gray-600">{grade}</span>
+                                                                </div>
+                                                                <span className="font-bold text-gray-900">{cost}</span>
+                                                            </div>
+                                                        );
+                                                    })
+                                                )}
                                             </div>
                                         </div>
                                     </div>

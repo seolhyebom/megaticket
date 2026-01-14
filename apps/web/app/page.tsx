@@ -3,17 +3,17 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { HomeCarousel } from "@/components/home-carousel"
-import { TimeSale } from "@/components/time-sale"
+import { ConcertSection } from "@/components/concert-section"
 import { ScrollToTop } from "@/components/scroll-to-top"
 
 
 
 export default function Home() {
-  const newArrivals = [
-    { id: "perf-kinky-1", title: "킹키부츠", category: "뮤지컬", discount: "15%", price: "144,500원", badge: "NEW", poster: "/posters/kinky-boots.png" },
-    { id: "perf-phantom-of-the-opera-1", title: "오페라의 유령", category: "뮤지컬", discount: "20%", price: "120,000원", badge: "HOT", poster: "/posters/opera.png" },
-    { title: "세상 끝의 카페(용인)", category: "뮤지컬", discount: "45%", price: "36,300원", badge: "NEW" },
-    { title: "옥탑방 고양이(대구)", category: "연극", discount: "50%", price: "20,000원", badge: "NEW" },
+  const musicals = [
+    { id: "perf-kinky-1", title: "킹키부츠", category: "뮤지컬", price: "170,000원", badge: "HOT", poster: "/posters/kinky-boots.png" },
+    { id: "perf-phantom-of-the-opera-1", title: "오페라의 유령", category: "뮤지컬", price: "180,000원", badge: "HOT", poster: "/posters/opera.png" },
+    { title: "레미제라블", category: "뮤지컬", price: "170,000원", badge: "NEW" },
+    { title: "위키드", category: "뮤지컬", price: "160,000원", badge: "NEW" },
   ]
 
   const activities = [
@@ -41,17 +41,17 @@ export default function Home() {
 
         {/* Time Sale Section */}
         <div className="bg-white rounded-xl shadow-xl p-6 md:p-8 animate-in slide-in-from-bottom duration-700">
-          <TimeSale />
+          <ConcertSection />
         </div>
 
-        {/* Section: New Arrivals */}
+        {/* Section: Musicals */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900">✨ 신규 공연</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-gray-900">🎭 뮤지컬</h2>
             <Button variant="ghost" className="text-muted-foreground hover:text-primary">더보기 &gt;</Button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {newArrivals.map((item, idx) => (
+            {musicals.map((item, idx) => (
               <SimpleCard key={idx} item={item} />
             ))}
           </div>
@@ -114,7 +114,7 @@ function SimpleCard({ item, bgWhite = false }: { item: SimpleCardItem, bgWhite?:
 
   return (
     <CardWrapper>
-      <Card className={`group border-none shadow-none hover:bg-transparent cursor-pointer ${bgWhite ? 'bg-white' : 'bg-transparent'}`}>
+      <Card className={`group border-none shadow-none hover:bg-transparent cursor-pointer ${bgWhite ? 'bg-white/70 backdrop-blur-sm' : 'bg-transparent'}`}>
         <div className="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-200 mb-3 shadow-sm group-hover:shadow-md transition-all group-hover:-translate-y-1">
           {item.badge && (
             <div className={`absolute top-3 left-3 z-10 ${item.badge === 'HOT' ? 'bg-red-500 text-white' : 'bg-yellow-400 text-black'} text-xs font-bold px-2 py-1 rounded`}>
@@ -130,7 +130,7 @@ function SimpleCard({ item, bgWhite = false }: { item: SimpleCardItem, bgWhite?:
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 25vw, 25vw"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-gray-100">
+            <div className="w-full h-full flex items-center justify-center text-gray-400 bg-white/50">
               Image
             </div>
           )}
