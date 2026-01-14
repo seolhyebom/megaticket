@@ -11,21 +11,13 @@ import { apiClient } from "@/lib/api-client"
 import { cn } from "@/lib/utils"
 import { parseSeatId, calculateGlobalSeatNumber } from "@mega-ticket/shared-types"
 
-// [V8.17 FIX] 등급별 색상 매핑 - DB seatColors와 일치
+// [V8.22] 등급별 색상 기본값 - DB seatColors가 없을 때 fallback으로 사용
 const GRADE_COLORS: Record<string, string> = {
     'OP': '#9E37D1',   // 보라색 (오케스트라 피트)
     'VIP': '#FF0000',  // 빨간색
-    'R': '#FFA500',    // 주황색
+    'R': '#8B5CF6',    // 보라색
     'S': '#1E90FF',    // 파란색
     'A': '#32CD32',    // 초록색
-};
-
-// [V8.20] 콘서트별 팬덤 색상 매핑
-const CONCERT_COLORS: Record<string, Record<string, string>> = {
-    'perf-bts-worldtour': { VIP: '#9333EA', R: '#A78BFA' },
-    'perf-blackpink-worldtour': { VIP: '#EC4899', R: '#F472B6' },
-    'perf-day6-present': { VIP: '#EAB308', R: '#FCD34D' },
-    'perf-ive-showhave': { VIP: '#DC2626', R: '#F87171' },
 };
 
 // [V8.17] 등급 정렬 순서
@@ -81,15 +73,17 @@ function ReservationConfirmContent() {
                     if (res.ok) {
                         const holdingData = await res.json();
 
-                        // Sections 정보 가져오기 (좌석 번호 계산용)
+                        // [V8.22] Sections 및 seatColors 정보 가져오기 (TTL 7일 적용된 performance API 사용)
                         let sections = [];
+                        let seatColors: Record<string, string> = {};
                         try {
                             const perfRes = await fetch(`/api/performances/${holdingData.performanceId}`);
                             if (perfRes.ok) {
                                 const perfData = await perfRes.json();
                                 sections = perfData.sections || [];
+                                seatColors = perfData.seatColors || {};
                             }
-                        } catch (e) { console.error("Failed to fetch sections", e); }
+                        } catch (e) { console.error("Failed to fetch performance data", e); }
 
                         // [V8.13 FIX] totalPrice 계산 (서버에서 안 주면 클라이언트에서 계산)
                         const calculatedTotalPrice = holdingData.totalPrice ??
@@ -103,7 +97,8 @@ function ReservationConfirmContent() {
                             time: holdingData.time,
                             seats: holdingData.seats,
                             totalPrice: calculatedTotalPrice,
-                            sections: sections
+                            sections: sections,
+                            seatColors: seatColors  // [V8.22] DB seatColors 저장
                         };
 
                         console.log('[ReservationConfirm] Loaded from server:', {
@@ -322,9 +317,8 @@ function ReservationConfirmContent() {
                                 }
 
                                 const displayText = `${floor} ${sectionId}구역 ${rowId}열 ${displayNumber}번 (${seat.grade}석)`;
-                                // [V8.20 FIX] 콘서트별 팬덤 색상 우선, 없으면 API 응답, 최종 fallback은 GRADE_COLORS
-                                const concertColors = session.performanceId ? CONCERT_COLORS[session.performanceId] : null;
-                                const gradeColor = concertColors?.[seat.grade] || (seat as any).color || GRADE_COLORS[seat.grade] || '#333333';
+                                // [V8.22 FIX] DB seatColors(TTL 7일) 우선, 없으면 seat.color, 최종 GRADE_COLORS fallback
+                                const gradeColor = session.seatColors?.[seat.grade] || (seat as any).color || GRADE_COLORS[seat.grade] || '#333333';
 
                                 return (
                                     // V7.13: 아이템 간격 조절 (p-2 -> py-0.5 px-2)

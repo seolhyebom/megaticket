@@ -9,6 +9,7 @@ export interface ReservationSession {
     totalPrice: number;
     venue?: string; // Add venue for display
     sections?: SectionData[]; // V7.15 SSOT: 연속 번호 계산용
+    seatColors?: Record<string, string>; // [V8.22] DB seatColors (TTL 7일 적용)
 }
 
 const STORAGE_KEY = "megaticket-reservation-session"
