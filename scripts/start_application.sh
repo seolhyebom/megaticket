@@ -35,7 +35,10 @@ export DYNAMODB_VENUES_TABLE=MegaTicket-Hybrid-venues
 # 4. PM2로 앱 시작
 echo "[4] Starting PM2..."
 pm2 delete app 2>/dev/null || true
-pm2 start npm --name "app" --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss" -- start
+
+# pm2 start npm --name "app" --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss" -- start
+
+pm2 start node_modules/next/dist/bin/next --name "app" --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss" -- start -H 0.0.0.0 -p 3001
 
 # 5. [핵심] 앱 구동 확인 및 로그 덤프
 echo "[5] Waiting for app to initialize (5 seconds)..."
