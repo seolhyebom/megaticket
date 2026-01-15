@@ -1,0 +1,61 @@
+version: 0.2
+
+# CodeBuild 빌드 명세서
+# apps/app 빌드 후 deploy 폴더에 복사 (node_modules 포함)
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+    commands:
+      - n 24.12.0
+      - node --version
+      - npm --version
+  
+  pre_build:
+    commands:
+      - echo "Installing workspace dependencies..."
+      - npm install
+      - echo "Building shared-types..."
+      - cd packages/shared-types
+      - npm run build
+      - cd ../..
+      - echo "Dependencies ready"
+  
+  build:
+    commands:
+      - echo "Building Next.js app..."
+      - cd apps/app
+      - npm run build
+      - cd ../..
+      - echo "Build completed successfully"
+  
+  post_build:
+    commands:
+      - echo "Preparing deployment artifacts..."
+      # 배포용 폴더 생성
+      - mkdir -p deploy/scripts
+      # 앱 소스 복사 (.next 포함, 숨김 파일 포함)
+      - cp -r apps/app/. deploy/
+      # 루트 node_modules 복사 (Monorepo 의존성)
+      - cp -r node_modules deploy/
+      # appspec.yml 복사
+      - cp appspec.yml deploy/
+      # 배포 스크립트 복사
+      - cp scripts/stop_application.sh deploy/scripts/
+      - cp scripts/before_install.sh deploy/scripts/
+      - cp scripts/start_application.sh deploy/scripts/
+      - cp scripts/validate_service.sh deploy/scripts/
+      - echo "Artifacts prepared"
+
+artifacts:
+  files:
+    - '**/*'
+  base-directory: deploy
+  name: app-build-$(date +%Y%m%d-%H%M%S)
+  
+# 캐시 비활성화 (Node 버전 변경으로 인한 호환성 문제 방지)
+# cache:
+#   paths:
+#     - 'node_modules/**/*'
+#     - 'apps/app/node_modules/**/*'
