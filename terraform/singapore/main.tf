@@ -217,7 +217,9 @@ resource "aws_vpc_endpoint" "s3" {
           "arn:aws:s3:::${var.project_name}-s3-web/*",
           "arn:aws:s3:::al2023-repos-*/*",
           "arn:aws:s3:::amazonlinux-*/*",
-          "arn:aws:s3:::codepipeline-${var.aws_region}-*/*"
+          "arn:aws:s3:::codepipeline-${var.aws_region}-*/*",
+          "arn:aws:s3:::aws-codedeploy-${var.aws_region}/*",
+          "arn:aws:s3:::aws-codedeploy-${var.aws_region}"
         ]
       }
     ]
