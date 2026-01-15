@@ -26,7 +26,9 @@ app_asg_max     = 4
 app_asg_desired = 1
 
 # DynamoDB (싱가포르에 수동 생성 완료)
-dynamodb_table_prefix = "plcr-gtbl"
+# dynamodb_table_prefix = "plcr-gtbl"
+
+dynamodb_table_prefix = "MegaTicket-Hybrid"
 
 # 도메인
 domain_name = "pilotlight-test.click"
