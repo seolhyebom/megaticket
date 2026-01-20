@@ -18,13 +18,13 @@ export NVM_DIR="/home/ec2-user/.nvm"
 # 앱 디렉토리로 이동
 cd $APP_DIR
 
-# 의존성 설치 (production only)
-echo "Installing production dependencies..."
-npm ci --omit=dev
+# node_modules가 이미 포함되어 있으므로 npm install 생략
+echo "Checking node_modules..."
+ls -la node_modules 2>/dev/null && echo "node_modules exists!" || echo "WARNING: node_modules not found!"
 
-# PM2로 앱 시작
+# PM2로 앱 시작 (next 직접 실행)
 echo "Starting application with PM2..."
-pm2 start npm --name "mega-ticket-app" -- start
+pm2 start node_modules/next/dist/bin/next --name "mega-ticket-app" --merge-logs --log-date-format="YYYY-MM-DD HH:mm:ss" -- start -H 0.0.0.0 -p 3001
 
 # PM2 상태 저장 (재부팅 시 자동 시작)
 pm2 save

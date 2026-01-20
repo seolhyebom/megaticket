@@ -55,6 +55,9 @@ jobs:
           cp next.config.js deploy-package/ 2>/dev/null || true
           cp next.config.mjs deploy-package/ 2>/dev/null || true
           
+          # 루트 node_modules 복사 (Monorepo 의존성)
+          cp -r ../../node_modules deploy-package/
+          
           # 배포 스크립트 복사
           mkdir -p deploy-package/scripts
           cp ../../scripts/stop_application.sh deploy-package/scripts/
