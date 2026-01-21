@@ -52,6 +52,24 @@ jobs:
             --distribution-id E2R4D3647K4SKR \
             --paths "/*"
       
+      # CRR 복제 대기
+      - name: Wait for CRR
+        run: sleep 30
+
+      # 도쿄용 config.js 덮어쓰기
+      - name: Upload DR config to Tokyo
+        run: |
+          cat > /tmp/config.js << 'EOF'
+          window.__PLCR_CONFIG__ = {
+            API_URL: "https://megaticket.click",
+            AWS_REGION: "ap-northeast-1",
+            PROJECT: "plcr",
+            ENVIRONMENT: "dr"
+          };
+          EOF
+          aws s3 cp /tmp/config.js s3://plcr-s3-web-an1/config.js --region ap-northeast-1
+
+      
       - name: Deployment Summary
         run: |
           echo "✅ Deployment completed!"
