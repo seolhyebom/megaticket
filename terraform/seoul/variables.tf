@@ -111,10 +111,3 @@ variable "acm_certificate_arn" {
   default     = "arn:aws:acm:ap-northeast-2:626614672806:certificate/84cc7d70-59c8-4ae6-91c3-3e2f14b028ea"
 }
 
-# -----------------------------------------------------------------------------
-# GitHub 레포지토리
-# -----------------------------------------------------------------------------
-variable "github_repo" {
-  type        = string
-  default     = "https://github.com/seolhyebom/megaticket.git"
-}

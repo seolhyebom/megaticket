@@ -3,7 +3,7 @@ name: Deploy Web to S3 + CloudFront
 on:
   push:
     branches:
-      - stfc-dev # stfc-dev 브랜치 푸시 시 실행
+      - githubcicd # githubcicd 브랜치 푸시 시 실행
     paths:
       - 'apps/web/**'
       - '.github/workflows/deploy-web.yml'
@@ -40,22 +40,22 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-southeast-1
+          aws-region: ap-northeast-2
       
-      - name: Upload to S3 Singapore
+      - name: Upload to S3 Seoul
         run: |
-          aws s3 sync apps/web/out/ s3://plcr-web-singapore/ --delete
+          aws s3 sync apps/web/out/ s3://plcr-s3-web-an2/ --delete
       
       - name: Invalidate CloudFront Cache
         run: |
           aws cloudfront create-invalidation \
-            --distribution-id E2M7ZCNM694ZRS \
+            --distribution-id E2R4D3647K4SKR \
             --paths "/*"
       
       - name: Deployment Summary
         run: |
           echo "✅ Deployment completed!"
-          echo "📦 Bucket: s3://plcr-web-singapore/"
-          echo "🌐 Region: ap-southeast-1 (Singapore)"
+          echo "📦 Bucket: s3://plcr-s3-web-an2/"
+          echo "🌐 Region: ap-northeast-2 (Seoul)"
           echo "🔄 CloudFront: Cache invalidated"
-          echo "🌍 URL: https://d1577wnsw99fb9.cloudfront.net"
+          echo "🔄 CRR: Will replicate to plcr-s3-web-an1 (Tokyo DR)"

@@ -19,13 +19,8 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
-  # User Data - App 서버 초기화, 서비스 시작
-  user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
-    project_name          = var.project_name
-    aws_region            = var.aws_region
-    dynamodb_table_prefix = var.dynamodb_table_prefix
-    github_repo           = var.github_repo
-  }))
+  # User Data - CodeDeploy Agent 설치 (GitHub Actions CI/CD 방식)
+  user_data = base64encode(file("${path.module}/user_data_main_seoul.sh"))
 
   tag_specifications {
     resource_type = "instance"

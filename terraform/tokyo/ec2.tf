@@ -20,11 +20,8 @@ resource "aws_launch_template" "app" {
 
   vpc_security_group_ids = [aws_security_group.app.id]
 
-  # App User Data (DR 환경변수 설정)
-  user_data = base64encode(templatefile("${path.module}/user_data_app.sh", {
-    aws_region            = var.aws_region
-    dynamodb_table_prefix = var.dynamodb_table_prefix
-  }))
+  # User Data - S3에서 app.zip 다운로드 (GitHub Actions 빌드 아티팩트)
+  user_data = base64encode(file("${path.module}/user_data_dr_tokyo.sh"))
 
   tag_specifications {
     resource_type = "instance"

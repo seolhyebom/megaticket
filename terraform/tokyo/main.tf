@@ -197,7 +197,9 @@ resource "aws_vpc_endpoint" "s3" {
           "s3:ListBucket"
         ]
         Resource  = [
-          "arn:aws:s3:::${var.project_name}-s3-web/*"
+          "arn:aws:s3:::${var.project_name}-s3-web/*",
+          "arn:aws:s3:::plcr-s3-an1-app-artifacts",
+          "arn:aws:s3:::plcr-s3-an1-app-artifacts/*"
           # 로그 적재용 S3 버킷 생성 시 arn 추가 필요
         ]
       },

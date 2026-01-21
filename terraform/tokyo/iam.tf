@@ -122,6 +122,33 @@ resource "aws_iam_role_policy" "cloudwatch_policy" {
 }
 
 # -----------------------------------------------------------------------------
+# S3 아티팩트 버킷 접근 정책 (app.zip 다운로드용)
+# -----------------------------------------------------------------------------
+resource "aws_iam_role_policy" "s3_artifacts_policy" {
+  name = "${var.project_name}-pol-${var.region_code}-s3-artifacts"
+  role = aws_iam_role.ec2_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "S3ArtifactsAccess"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          "arn:aws:s3:::plcr-s3-an1-app-artifacts",
+          "arn:aws:s3:::plcr-s3-an1-app-artifacts/*"
+        ]
+      }
+    ]
+  })
+}
+
+# -----------------------------------------------------------------------------
 # Instance Profile
 # -----------------------------------------------------------------------------
 resource "aws_iam_instance_profile" "ec2_profile" {
