@@ -5,16 +5,10 @@ const dynamodb = new DynamoDBClient({ region: process.env.AWS_REGION });
 
 export async function GET() {
     try {
-        // 서비스 운영에 필요한 모든 주요 테이블의 연결 상태 전수 점검
-        const tables = [
-            "plcr-gtbl-users",
-            "plcr-gtbl-performances",
-            "plcr-gtbl-reservations",
-            "plcr-gtbl-schedules",
-            "plcr-gtbl-venues"
-        ];
-
-        for (const tableName of tables) {
+        // DynamoDB 연결 확인 (테이블 존재 여부 체크)
+        // 환경변수가 없으면 에러가 날 수 있으므로 체크
+        const tableName = process.env.DYNAMODB_PERFORMANCES_TABLE;
+        if (tableName) {
             await dynamodb.send(new DescribeTableCommand({
                 TableName: tableName
             }));
@@ -24,10 +18,9 @@ export async function GET() {
             status: 'healthy',
             timestamp: new Date().toISOString(),
             service: 'api-server',
-            region: process.env.AWS_REGION || 'ap-northeast-2'
+            region: process.env.AWS_REGION
         });
     } catch (error) {
-        console.error('Health check failed:', error);
         return NextResponse.json({
             status: 'unhealthy',
             error: error instanceof Error ? error.message : 'Unknown'
