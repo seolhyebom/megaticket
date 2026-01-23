@@ -14,7 +14,7 @@
         "@aws-sdk/client-dynamodb": "^3.958.0",
         "@aws-sdk/lib-dynamodb": "^3.958.0",
         "@mega-ticket/shared-types": "*",
-        "@types/bcryptjs": "^6.0.0",
+        "@types/bcryptjs": "^2.4.6",
         "@types/jsonwebtoken": "^9.0.10",
         "bcryptjs": "^2.4.3",
         "jsonwebtoken": "^9.0.3",
