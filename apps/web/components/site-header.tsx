@@ -141,7 +141,7 @@ function SiteHeaderContent() {
                             <Link href="/login">
                                 <Button variant="ghost" size="sm" className="hidden md:flex gap-2 text-muted-foreground hover:text-gray-900 hover:bg-transparent">
                                     <User className="h-5 w-5" />
-                                    <span className="font-medium">로그인</span>
+                                    <span className="font-medium">로그인 / 회원가입</span>
                                 </Button>
                             </Link>
                         )}

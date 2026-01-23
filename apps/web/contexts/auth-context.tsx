@@ -25,19 +25,6 @@ export const mockAuthService: AuthService = {
         // Simulate API delay
         await new Promise((resolve) => setTimeout(resolve, 500))
 
-        // Simple mock check
-        if (email === "test@example.com" && password === "password") {
-            const user: User = {
-                id: "mock-user-01",
-                email: email,
-                name: "Test User",
-            }
-            return user
-        }
-
-        // Auto-create user for any other credentials to simplify testing? 
-        // Or strict mock? Let's be strict for test@example.com but allow others as "new" users if needed?
-        // For now, simple mock login.
         throw new Error("Invalid credentials")
     },
 
