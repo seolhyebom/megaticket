@@ -31,7 +31,8 @@ function MyPageContent() {
 
             try {
                 console.log('[MyPage] Fetching reservations with region:', region);
-                const res = await fetch(`/api/reservations?userId=${user.id}&region=${region}`)
+                // [Modified] Use email to query reservations
+                const res = await fetch(`/api/reservations?userId=${user.email}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)
@@ -56,7 +57,8 @@ function MyPageContent() {
             })
             if (res.ok) {
                 // Refresh list - V7.18: 상위 스코프 region 사용
-                const res = await fetch(`/api/reservations?userId=${user!.id}&region=${region}`)
+                // [Modified] Use email to refresh list
+                const res = await fetch(`/api/reservations?userId=${user!.email}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)
@@ -78,7 +80,8 @@ function MyPageContent() {
             })
             if (res.ok) {
                 // Refresh list - V7.18: 상위 스코프 region 사용
-                const res = await fetch(`/api/reservations?userId=${user!.id}&region=${region}`)
+                // [Modified] Use email to refresh list
+                const res = await fetch(`/api/reservations?userId=${user!.email}&region=${region}`)
                 if (res.ok) {
                     const data = await res.json()
                     setReservations(data)

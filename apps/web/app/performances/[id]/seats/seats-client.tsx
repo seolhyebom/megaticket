@@ -103,7 +103,8 @@ function SeatsContentInner({ user, searchParams, router }: {
         setIsSubmitting(true)
 
         // Ensure user is logged in or use a guest ID fallback (though consistent login is preferred)
-        const userId = user?.id || "guest-user-1"
+        // [Modified] Use email as unique identifier for reservations
+        const userId = user?.email || "guest-user-1"
 
         try {
             // V7.20: venue, performanceTitle, posterUrl 파라미터 추가 (HOLDING에 비정규화 데이터 저장)
