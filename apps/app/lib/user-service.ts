@@ -23,9 +23,7 @@ export async function createUser(data: any) {
 
     // 3. 저장
     const user = {
-        pk: `USER#${email}`,
-        sk: `PROFILE`,
-        email,
+        email, // PK
         password: hashedPassword,
         name,
         createdAt: new Date().toISOString(),
@@ -44,8 +42,7 @@ export async function getUserByEmail(email: string) {
     const command = new GetCommand({
         TableName: TABLE_NAME,
         Key: {
-            pk: `USER#${email}`,
-            sk: `PROFILE`,
+            email, // PK matches schema
         },
     });
 
